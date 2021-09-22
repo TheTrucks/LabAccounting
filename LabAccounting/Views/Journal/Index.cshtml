@@ -1,0 +1,193 @@
+﻿@{
+    ViewBag.TitlePage = "Журнал реагентов";
+}
+<style>
+    tr.lineload {
+        background-color: #ffedd2;
+    }
+    tr.lineload:hover {
+        cursor: pointer;
+    }
+
+    #SampleTable > tbody > tr:hover {
+        background-color: navajowhite !important;
+    }
+
+    .lds-ellipsis {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 15px;
+        padding: 0px !important;
+        margin: 0px !important;
+    }
+    .lds-ellipsis div {
+        position: absolute;
+        top: 25%;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #2a46ff;
+        animation-timing-function: cubic-bezier(0, 1, 1, 0);
+    }
+    .lds-ellipsis div:nth-child(1) {
+        left: 8px;
+        animation: lds-ellipsis1 0.6s infinite;
+    }
+    
+    .lds-ellipsis div:nth-child(2) {
+        left: 8px;
+        animation: lds-ellipsis2 0.6s infinite;
+    }
+    
+    .lds-ellipsis div:nth-child(3) {
+        left: 32px;
+        animation: lds-ellipsis2 0.6s infinite;
+    }
+    
+    .lds-ellipsis div:nth-child(4) {
+        left: 56px;
+        animation: lds-ellipsis3 0.6s infinite;
+    }
+    @@keyframes lds-ellipsis1 {
+        0% {
+            transform: scale(0);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    @@keyframes lds-ellipsis3 {
+        0% {
+            transform: scale(1);
+        }
+        100% {
+            transform: scale(0);
+        }
+    }
+    @@keyframes lds-ellipsis2 {
+        0% {
+            transform: translate(0, 0);
+        }
+        100% {
+            transform: translate(24px, 0);
+        }
+    }
+
+</style>
+
+<div id="load" style="position: absolute; left: 0; top: 0; height: 100%; width: 100%; z-index: 9876;">
+    <div class="pageloader"></div>
+</div>
+
+<div class="row">
+    <div class="col-sm-3">
+
+    </div>
+    <div class="col-sm-6">
+        <h2 class="center-block text-center">Журнал реагентов</h2>
+    </div>
+    <div class="col-sm-3">
+
+    </div>
+</div>
+<table class="table table-hover table-striped table-condensed" id="SampleTable">
+    <thead>
+        <tr>
+            <th><b>Дата поступления</b></th>
+            <th><b>Номер партии</b></th>
+            <th><b>Наименование</b></th>
+            <th><b>Категория</b></th>
+            <th><b>Агр. сост.</b></th>
+            <th><b>Класс</b></th>
+            <th><b>Прекурсор</b></th>
+            <th><b>Поставщик</b></th>
+            <th><b>Срок годности</b></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr data-page="@Html.Raw(ViewBag.Page)" id="DataLoadTop" class="lineload @(ViewBag.Page == 1 ? "hidden" : "")">
+            <td colspan="9" class="text-center">Загрузить данные</td>
+        </tr>
+        <tr data-page="@Html.Raw(ViewBag.Page)" id="DataLoadBot" class="lineload">
+            <td colspan="9" class="text-center">Загрузить данные</td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    var Fetching = new Boolean(false);
+
+    $(document).ready(function () {
+        GetNewPage("down", true);
+        $("#DataLoadTop").click(function () { GetNewPage("up", false); });
+        $("#DataLoadBot").click(function () { GetNewPage("down", false); });
+    });
+
+    function GetNewPage(direction, initial) {
+        if (Fetching == false) {
+            Fetching = true;
+            var Scroller = direction == "down" ? $("#DataLoadBot") : $("#DataLoadTop");
+            LineLoad(Scroller);
+            var Page = Number($(Scroller).data("page"));
+            $.ajax({
+                url: "@Url.Action("SampleListJson", "Journal")",
+                data: { page: Page },
+                type: "POST",
+                dataType: "json"
+            })
+                .done(function (data) { AddEntries(data, Scroller, Page, direction); })
+                .fail(function (data) { console.log(data); }) // temporary output
+                .always(function () {
+                    Fetching = false;
+                    if (initial == true) { $("#load").remove(); $("body").css("pointer-events", ""); }
+                    LineLoadEnd(Scroller);
+                });
+        }
+    }
+    //$(datad).html((window.innerHeight + window.pageYOffset) + "\\" + document.body.scrollHeight);
+    function AddEntries(jsonData, element, page, direction) {
+        if (jsonData.length > 0) {
+            if (direction == "down") {
+                $(element).data("page", page + 1);
+            }
+            else {
+                $(element).data("page", page - 1);
+                if (page - 1 == 1) {
+                    $(element).addClass("hidden");
+                }
+            }
+        }
+        var Items = [];
+        for (var i = 0; i < jsonData.length; i++) {
+            var Item = jsonData[i];
+            var Insert = $("<tr>")
+                .append($("<td>").text(Item.DateReceived))
+                .append($("<td>").text(Item.BatchNumber))
+                .append($("<td>").text(Item.Name))
+                .append($("<td>").text(Item.Category.Description))
+                .append($("<td>").text(Item.AggrState.Description))
+                .append($("<td>").text(Item.Class.ShortName))
+                .append($("<td>")
+                    .append($("<span>").addClass(Item.Precursor == true ? "glyphicon glyphicon-ok" : "glyphicon glyphicon-remove"))
+                )
+                .append($("<td>").text(Item.Supplier))
+                .append($("<td>").text(Item.DateExpiration))
+                .attr("data-id", Item.Id)
+            Items.push(Insert);
+        }
+        if (Items.length > 0) {
+            direction == "down" ? $("#SampleTable > tbody:last-child").before(Items) : $("#SampleTable > tbody:first-child").after(Items);
+        }
+    }
+
+    function LineLoad(element) {
+        var Insert = $("<div>").addClass("lds-ellipsis").append($("<div>")).append($("<div>")).append($("<div>")).append($("<div>"));
+        $(element).children().html("");
+        $(element).children().append(Insert);
+    }
+
+    function LineLoadEnd(element) {
+        $(element).children().html("Загрузить данные");
+    }
+</script>

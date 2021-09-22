@@ -1,0 +1,34 @@
+﻿@model List<LabAccEntity.Models.Data.Sample>
+
+<table class="table table-hover table-striped table-condensed">
+    <thead>
+        <tr>
+            <th><b>Дата поступления</b></th>
+            <th><b>Номер партии</b></th>
+            <th><b>Наименование</b></th>
+            <th><b>Категория</b></th>
+            <th><b>Агр. сост.</b></th>
+            <th><b>Класс</b></th>
+            <th><b>Прекурсор</b></th>
+            <th><b>Поставщик</b></th>
+            <th><b>Срок годности</b></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var Item in Model)
+            {
+                <tr>
+                    <td>@Item.DateReceived.ToString("dd.MM.yyyy")</td>
+                    <td>@Item.BatchNumber</td>
+                    <td>@Item.Name</td>
+                    <td>@Item.Category.Description</td>
+                    <td>@Item.AggrState.Description</td>
+                    <td>@Item.Class.ShortName</td>
+                    <td><span class="@(Item.Precursor ? "glyphicon glyphicon-ok" : "glyphicon glyphicon-remove")"></span></td>
+                    <td>@Item.Supplier</td>
+                    <td>@Item.DateExpiration.ToString("dd.MM.yyyy")</td>
+                </tr>
+            }
+    </tbody>
+</table>
+
