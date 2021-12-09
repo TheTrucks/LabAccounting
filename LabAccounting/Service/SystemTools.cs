@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using LabAccEntity.Models.Data;
 using System.Web;
 
@@ -8,29 +9,29 @@ namespace LabAccounting.Service
 {
     public static class SystemTools
     {
-        public static Func<Sample, DateTime, DateTime, bool> GetFilter(string Input)
+        public static Expression<Func<Sample, bool>> GetFilter(string Input, DateTime DateLow, DateTime DateHigh)
         {
-            Func<Sample, DateTime, DateTime, bool> Result;
+            Expression<Func<Sample, bool>> Result;
             switch (Input.ToUpperInvariant().Trim())
             {
                 case "DATEEXPIRED":
-                    Result = (x, l, h) => x.DateExpired > l && x.DateExpired <= h;
+                    Result = x => x.DateExpired > DateLow && x.DateExpired <= DateHigh;
                     break;
                 case "DATEEXPIRATION":
-                    Result = (x, l, h) => x.DateExpiration > l && x.DateExpiration <= h;
+                    Result = x => x.DateExpiration > DateLow && x.DateExpiration <= DateHigh;
                     break;
                 case "DATEDEPLETED":
-                    Result = (x, l, h) => x.DateDepleted > l && x.DateDepleted <= h;
+                    Result = x => x.DateDepleted > DateLow && x.DateDepleted <= DateHigh;
                     break;
                 case "DATEWAYBILL":
-                    Result = (x, l, h) => x.DateWaybill > l && x.DateWaybill <= h;
-                    break;
-                case "DATERECEIVED":
-                    Result = (x, l, h) => x.DateReceived > l && x.DateReceived <= h;
+                    Result = x => x.DateWaybill > DateLow && x.DateWaybill <= DateHigh;
                     break;
                 case "DATECREATED":
+                    Result = x => x.DateCreated > DateLow && x.DateCreated <= DateHigh;
+                    break;
+                case "DATERECEIVED":
                 default:
-                    Result = (x, l, h) => x.DateCreated > l && x.DateCreated <= h;
+                    Result = x => x.DateReceived > DateLow && x.DateReceived <= DateHigh;
                     break;
             }
             return Result;
@@ -53,12 +54,12 @@ namespace LabAccounting.Service
                 case "DATEWAYBILL":
                     Result = x => x.DateWaybill;
                     break;
-                case "DATERECEIVED":
-                    Result = x => x.DateReceived;
-                    break;
                 case "DATECREATED":
-                default:
                     Result = x => x.DateCreated;
+                    break;
+                case "DATERECEIVED":
+                default:
+                    Result = x => x.DateReceived;
                     break;
             }
             return Result;

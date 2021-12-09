@@ -99,12 +99,15 @@
     <Compile Include="Mappings\Meta\AggregateStateMap.cs" />
     <Compile Include="Mappings\Meta\ReagentCategoryMap.cs" />
     <Compile Include="Mappings\Meta\ReagentClassMap.cs" />
+    <Compile Include="Mappings\Meta\TemplateMap.cs" />
     <Compile Include="Mappings\Meta\UnitMap.cs" />
     <Compile Include="Models\Data\Sample.cs" />
     <Compile Include="Models\Data\SampleData.cs" />
     <Compile Include="Models\Meta\AggregateState.cs" />
+    <Compile Include="Models\Meta\MetaBase.cs" />
     <Compile Include="Models\Meta\ReagentCategory.cs" />
     <Compile Include="Models\Meta\ReagentClass.cs" />
+    <Compile Include="Models\Meta\Template.cs" />
     <Compile Include="Models\Meta\Unit.cs" />
     <Compile Include="NHibernateHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

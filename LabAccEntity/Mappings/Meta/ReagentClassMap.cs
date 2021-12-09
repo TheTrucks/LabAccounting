@@ -16,6 +16,7 @@ namespace LabAccEntity.Mappings.Meta
             Id(x => x.Id);
             Map(x => x.ShortName, "short_name");
             Map(x => x.FullName, "full_name");
+            Map(x => x.Order, "order_by");
         }
     }
 }

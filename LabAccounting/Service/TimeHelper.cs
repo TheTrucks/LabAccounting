@@ -11,7 +11,7 @@ namespace LabAccounting.Service
         static TimeHelper()
         {
             if (!int.TryParse(System.Web.Configuration.WebConfigurationManager.AppSettings["DaysPerPage"], out DaysPerPage))
-                DaysPerPage = 5;
+                DaysPerPage = 2;
         }
         public static Tuple<DateTime, DateTime> GetPagedDates(int Page)
         {

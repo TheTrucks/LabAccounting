@@ -17,15 +17,12 @@
 }
 
 /* Set width on the form input elements since they're 100% wide by default */
-input,
-select,
-textarea {
-    max-width: 280px;
-}
 
 .pageloader {
-    margin: 100px auto;
-    font-size: 25px;
+    position: absolute; 
+    top: 50%;
+    left: 50%;
+    font-size: 20px;
     width: 1em;
     height: 1em;
     border-radius: 50%;
@@ -36,6 +33,22 @@ textarea {
     -ms-transform: translateZ(0);
     transform: translateZ(0);
 }
+
+.dummy-pageloader {
+    font-size: 20px;
+    width: 3em;
+    height: 3em;
+}
+
+.row.display-flex {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+    .row.display-flex > [class*='col-'] {
+        display: flex;
+        flex-direction: column;
+    }
 
 @-webkit-keyframes pload {
     0%, 100% {

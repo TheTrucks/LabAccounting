@@ -15,5 +15,6 @@ namespace LabAccEntity.Models.Data
         public virtual Unit Unit { get; set; }
         public virtual string Comment { get; set; }
         public virtual int DepartmentId { get; set; }
+        public virtual string Receiver { get; set; }
     }
 }

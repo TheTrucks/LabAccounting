@@ -25,6 +25,7 @@ namespace LabAccEntity.Mappings.Data
             Map(x => x.BatchNumber, "batch_number");
             Map(x => x.Supplier);
             Map(x => x.Waybill);
+            References(x => x.DefaultUnit, "default_unit_id");
             Map(x => x.DateCreated, "date_created");
             Map(x => x.DateReceived, "date_received");
             Map(x => x.DateWaybill, "date_waybill");

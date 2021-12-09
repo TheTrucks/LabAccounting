@@ -20,6 +20,7 @@ namespace LabAccEntity.Mappings.Data
             References(x => x.Unit, "unit_id");
             Map(x => x.Comment);
             Map(x => x.DepartmentId, "department_id");
+            Map(x => x.Receiver);
         }
     }
 }
