@@ -3,131 +3,8 @@
 }
 
 @Scripts.Render("~/bundles/datepicker")
-<style>
-    tr.lineload {
-        background-color: #ffedd2;
-    }
-
-        tr.lineload:hover {
-            cursor: pointer;
-        }
-
-    .modal-footer--sticky {
-        position: sticky;
-        bottom: 0;
-        background-color: inherit; 
-        z-index: 1055;
-    }
-
-    div.autocompletion {
-        z-index: 9999;
-        position: absolute;
-        border: 1px solid black;
-        border-bottom: 0px;
-        width: 425px;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-
-        div.autocompletion div.auto-elem {
-            border-bottom: 1px solid black;
-            background-color: #fffae6;
-            height: 45px;
-            vertical-align: middle;
-            padding: 0;
-        }
-
-            div.autocompletion div.auto-elem :hover {
-                background-color: #ffea9c;
-                cursor: pointer;
-            }
-
-            div.autocompletion div.auto-elem p {
-                margin: 0;
-                margin-left: 15px;
-            }
-            div.autocompletion div.auto-elem div {
-                height: 100%;
-            }
-
-    #SampleTable > tbody > tr:hover {
-        background-color: navajowhite !important;
-    }
-
-    .modal-sample-row {
-        padding-top: 5px;
-        border-bottom: 2px solid rgb(150, 150, 150);
-    }
-
-    .lds-ellipsis {
-        display: inline-block;
-        position: relative;
-        width: 80px;
-        height: 15px;
-        padding: 0px !important;
-        margin: 0px !important;
-    }
-
-        .lds-ellipsis div {
-            position: absolute;
-            top: 25%;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #6277ff;
-            animation-timing-function: cubic-bezier(0, 1, 1, 0);
-        }
-
-            .lds-ellipsis div:nth-child(1) {
-                left: 8px;
-                animation: lds-ellipsis1 0.6s infinite;
-            }
-
-            .lds-ellipsis div:nth-child(2) {
-                left: 8px;
-                animation: lds-ellipsis2 0.6s infinite;
-            }
-
-            .lds-ellipsis div:nth-child(3) {
-                left: 32px;
-                animation: lds-ellipsis2 0.6s infinite;
-            }
-
-            .lds-ellipsis div:nth-child(4) {
-                left: 56px;
-                animation: lds-ellipsis3 0.6s infinite;
-            }
-
-    @@keyframes lds-ellipsis1 {
-        0% {
-            transform: scale(0);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    @@keyframes lds-ellipsis3 {
-        0% {
-            transform: scale(1);
-        }
-
-        100% {
-            transform: scale(0);
-        }
-    }
-
-    @@keyframes lds-ellipsis2 {
-        0% {
-            transform: translate(0, 0);
-        }
-
-        100% {
-            transform: translate(24px, 0);
-        }
-    }
-</style>
+@Scripts.Render("~/bundles/main_page")
+@Styles.Render("~/Content/mainpage");
 
 <div id="load" style="position: absolute; left: 0; top: 0; height: 100%; width: 100%; z-index: 9876; background-color: rgb(200,200,200); opacity: 0.45;">
     <div class="pageloader"></div>
@@ -172,11 +49,11 @@
 </table>
 
 <div id="SampleAdd" class="modal" role="dialog" data-keyboard="false" data-backdrop="static">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-wide">
         <div class="modal-content">
             <div class="modal-body" id="SampleAddBody">
             </div>
-            <div class="modal-footer modal-footer--sticky">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Отменить</button>
                 <button type="button" id="SampleAddSave" class="btn btn-primary">Сохранить</button>
             </div>
@@ -188,11 +65,12 @@
     var Fetching = new Boolean(false);
     var SampleAddPageLoader = null;
     var TemplateLoader = null;
-    var AutoMenu = null;
+    var NameMenu = null;
     var Templates = [];
     var ClassList = {};
     var UnitList = {};
     var PickersList = [];
+    var Validator = null;
 
     $(document).ready(function () {
         GetNewPage("down", true);
@@ -200,22 +78,6 @@
         $("#DataLoadBot").click(function () { GetNewPage("down", false); });
 
         $("#SampleAdd").on("show.bs.modal", function (modal_elem) {
-            //$(modal_elem.target).find("div.modal-content")
-            //    .append($("<div>")
-            //        .addClass("modal-footer")
-            //        .addClass("modal-footer--sticky")
-            //        .append(
-            //            $("<button type='button'>")
-            //                .addClass("btn btn-default")
-            //                .attr("data-dismiss", "modal")
-            //                .html("Отменить")
-            //        )
-            //        .append(
-            //            $("<button type='button' id='SampleAddSave'>")
-            //                .addClass("btn btn-primary")
-            //                .html("Сохранить")
-            //        )
-            //    );
             var MBody = $("#SampleAddBody");
             $(MBody).html(
                 $("<div>")
@@ -240,7 +102,14 @@
             url: "@Url.Action("MetaData", "Journal")",
             method: "POST"
             })
-                .done(function (data) { $(element).html(data); GetTemplates(); ApplyModalBindings(); CreatePickers(); UpdateMetaData(); })
+            .done(function (data) {
+                $(element).html(data);
+                GetNameTemplates();
+                Validator = new FormValidator(element);
+                ApplyModalBindings();
+                CreatePickers();
+                UpdateMetaData();
+            })
                 .fail(function (e) { console.log(e); }) // todo change temprorary output
                 .always(function () { SampleAddPageLoader = null; });
     }
@@ -265,11 +134,12 @@
 
     function ApplyModalBindings() {
         var NameInput = $("#SampleAddName");
-        NameInput.on("keyup", function (event) { DrawAutoMenu(event); });
-        NameInput.on("mousedown", function (event) { DrawAutoMenu(event); });
+        NameMenu = new AutofillMenu(NameMenuClick, function (inp) { return (obj) => obj.name.startsWith(inp) });
+        NameInput.on("keyup", function (event) { NameMenu.Draw(event); });
+        NameInput.on("click", function (event) { NameMenu.Draw(event); });
         $('body').on('click', function (event) {
             if (event.target != NameInput[0]) {
-                RemoveAutoMenu();
+                NameMenu.RemoveMenu();
             }
         });
         // todo binding on select class change (for "custom" variant)
@@ -281,56 +151,22 @@
         if (!triggered) {
             $(modal_elem).modal("hide");
         }
-        $(modal_elem).find("div.modal-body").remove();
+        $(modal_elem).find("div.modal-body").children().remove();
         PickersList.forEach(picker => picker.destroy());
         PickersList = [];
-    }
 
-    function RemoveAutoMenu() {
-        if (AutoMenu != null) {
-            $(AutoMenu).remove();
-            AutoMenu = null;
+        Validator = null;
+
+        $('body').off("click");
+        if (NameMenu != null) {
+            NameMenu.RemoveMenu();
+            NameMenu = null;
         }
     }
-    function DrawAutoMenu(event) {
-        var element = event.target;
-        RemoveAutoMenu();
 
-        var Elements = FillAutoMenu($(element).val())
-        if (Elements == null || Elements.length == 0)
-            return;
-
-        var Pos = $(element).offset();
-        AutoMenu =
-            $("<div>")
-                .addClass("autocompletion")
-                .offset({ top: Pos.top + 40, left: Pos.left });
-            ;
-        Elements.forEach(elem => AutoMenu.append(elem.GetAutoElem()));
-
-        $("body").append(AutoMenu);
-        $("div.auto-elem").click(function (event) { AutoMenuClick(event.currentTarget); });
-    }
-    function FillAutoMenu(input) {
-        var result = null;
-        if (input.length > 0) {
-            if (Templates.length == 0 && TemplateLoader != null) {
-                result = [];
-                result.push(
-                    {
-                        Type: -1,
-                        Name: "Загрузка шаблонов..."
-                    });
-            }
-            else
-                result = Templates.filter(inp => inp.name.startsWith(input));
-        }
-        return result;
-    }
-    function AutoMenuClick(element) {
+    function NameMenuClick(element) {
         if ($(element).attr("data-type") != "-1") {
             var TmpTemplate = Template.FromElement(element);
-            RemoveAutoMenu();
             $("#SampleAddClass").val(TmpTemplate.type);
             $("#SampleAddName").val(TmpTemplate.name);
             if (TmpTemplate.precursor == true) { $("#SampleAddPrecursor").prop("checked", "true"); }
@@ -340,18 +176,23 @@
         }
     }
 
-    function GetTemplates() {
+    function GetNameTemplates() {
         TemplateLoader = $.ajax({
                 url: "@Url.Action("GetTemplatesJson", "Journal")",
                 type: "POST",
                 dataType: "json"
         })
-            .done(function (data) { if (data.length > 0) { Templates = Template.FromJsonArray(JSON.parse(data)); } })
+            .done(function (data) {
+                if (data.length > 0) {
+                    Templates = Template.FromJsonArray(JSON.parse(data));
+                    if (NameMenu != null) { NameMenu.SetTemplates(Templates); }
+                }
+            })
             .fail(function (data) { console.log(data); }) // todo change temprorary output
             .always(function () { TemplateLoader = null; });
     }
-    function SaveNewTemplate() {
-        var newTemp = Template.FromInputs($("#SampleAddBody"));
+    function SaveNewNameTemplate() {
+        var newTemp = Template.FromInputs($("#SampleAddBody"), "SampleAddClass", "SampleAddName", "SampleAddPrecursor", "SampleAddDefUnit", "SampleAddStdInfo", "SampleAddStdNum");
         $.ajax({
             url: "@Url.Action("SaveTemplate", "Journal")",
             type: "POST",
@@ -434,25 +275,25 @@
     }
 
     function SaveNewSample() {
-        //todo inputs validation
-        var TmpSample = SampleAddModel.FromInputs($("#SampleAddBody")); //todo check if succesful
+        if (Validator && Validator.validate() == true) {
+            var TmpSample = SampleAddModel.FromInputs($("#SampleAddBody")); //todo check if succesful
 
-        $.ajax({
-            url: "@Url.Action("SaveSample", "Journal")",
-            data: JSON.stringify(TmpSample),
-            type: "POST",
-            dataType: "json",
-            contentType: "application/json; charset=utf-8"
-        })
-            .done(function (data) {
-                data = JSON.parse(data);
-                if (data.code == 200) {
-                    SaveNewTemplate();
-                    ClearModal($("#SampleAdd"));
-                    GetNewPage("down", false, true);
-                }
+            $.ajax({
+                url: "@Url.Action("SaveSample", "Journal")",
+                data: JSON.stringify(TmpSample),
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8"
             })
-            .fail(function (data) { console.log(data); }) //todo better logging
+                .done(function (data) {
+                    if (data && data.code == 200) {
+                        SaveNewNameTemplate();
+                        ClearModal($("#SampleAdd"));
+                        GetNewPage("down", false, true);
+                    }
+                })
+                .fail(function (data) { console.log(data); }) //todo better logging
+        }
     }
 
     function LineLoad(element) {
@@ -503,91 +344,6 @@
         Result.ReceivedDate = $(modal_body).find("#SampleAddDateReceived").val();
         Result.CreatedDate = $(modal_body).find("#SampleAddDateCreated").val();
         Result.ExpirationDate = $(modal_body).find("#SampleAddDateExpiration").val();
-        return Result;
-    }
-
-    function Template() {
-        this.type = -1;
-        this.name = "";
-        this.precursor = false;
-        this.defunit = -1;
-        this.stdinfo = "";
-        this.stdnumber = "";
-
-        Template.prototype.GetJson = function () {
-            return JSON.stringify({
-                "Type": this.type,
-                "Name": this.name,
-                "Precursor": this.precursor,
-                "DefUnit": this.defunit,
-                "StdInfo": this.stdinfo,
-                "StdNumber": this.stdnumber
-            })
-        }
-
-        Template.prototype.GetAutoElem = function () {
-            return $("<div>")
-                .addClass("auto-elem")
-                .attr("data-type", this.type)
-                .attr("data-name", this.name)
-                .attr("data-prec", this.precursor)
-                .attr("data-unit", this.defunit)
-                .attr("data-info", this.stdinfo)
-                .attr("data-num", this.stdnumber)
-                .append($("<div>").append(
-                    $("<p>")
-                        .append($("<b>").html("Наим.: "))
-                        .append(this.name)
-                        .append(" (" + ClassList.filter(x => x.Id == this.type)[0].ShortName + "); ")
-                        .append($("<b>").html("Прекурсор: "))
-                        .append(this.precursor == true ? "Да; " : "Нет; ")
-                        .append($("<b>").html("Ед.изм.: "))
-                        .append(UnitList.filter(x => x.Id == this.type)[0].ShortName)
-                ).append(
-                    $("<p>")
-                        .append($("<b>").html("№ стд.: "))
-                        .append((this.stdnumber.length > 10 ? this.stdnumber.slice(0, 8) + "..." : this.stdnumber) + "; ")
-                        .append($("<b>").html("Рекв.метод.исп.: "))
-                        .append(this.stdinfo.length > 20 ? this.stdinfo.slice(0, 18) + "..." : this.stdinfo)
-                ));
-        }
-    }
-    Template.FromElement = function (element) {
-        var Result = new Template();
-        Result.type = $(element).attr("data-type");
-        Result.name = $(element).attr("data-name");
-        Result.precursor = $(element).attr("data-prec");
-        Result.defunit = $(element).attr("data-unit");
-        Result.stdinfo = $(element).attr("data-info");
-        Result.stdnumber = $(element).attr("data-num");
-        return Result;
-    }
-    Template.FromInputs = function (form) {
-        var Result = new Template();
-        Result.type = $("#SampleAddClass").val();
-        Result.name = $("#SampleAddName").val();
-        Result.precursor = $("#SampleAddPrecursor").prop("checked");
-        Result.defunit = $("#SampleAddDefUnit").val();
-        Result.stdinfo = $("#SampleAddStdInfo").val();
-        Result.stdnumber = $("#SampleAddStdNum").val();
-        return Result;
-    }
-    Template.FromJsonArray = function (jsonarr) {
-        var Result = [];
-        for (var ind = 0; ind < jsonarr.length; ind++)
-        {
-            Result.push(Template.FromJson(jsonarr[ind]));
-        }
-        return Result;
-    }
-    Template.FromJson = function (json) {
-        var Result = new Template();
-        Result.type = json.Type.Id;
-        Result.name = json.Name;
-        Result.precursor = json.Precursor;
-        Result.defunit = json.DefaultUnit.Id;
-        Result.stdinfo = json.StandartInfo;
-        Result.stdnumber = json.StandartNumber;
         return Result;
     }
     // todo break script section into files

@@ -2,42 +2,10 @@
 @Html.Hidden("Units", Json.Encode(Model.Units))
 @Html.Hidden("Classes", Json.Encode(Model.Classes))
 <div class="modal-sample-row">
-    <div class="form-group">
-        <label><b>Категория вещества:</b></label>
-        @foreach (var Cat in Model.Categories)
-        {
-            <div class="radio">
-                <label>
-                    <input type="radio" name="optCategories" value="@Cat.Id" />
-                    @Cat.Description
-                </label>
-            </div>
-        }
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label><b>Агрегатное состояние:</b></label>
-        @foreach (var Aggr in Model.AggrStates)
-        {
-            <div class="radio">
-                <label>
-                    <input type="radio" name="optAggrs" value="@Aggr.Id" />
-                    @Aggr.Description
-                </label>
-            </div>
-        }
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
+    <div class="form-group col-sm-4">
         <label for="SampleAddName"><b>Наименование:</b></label>
-        <input type="text" id="SampleAddName" class="form-control" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label><b>Отметка прекурсора:</b></label>
+        <input type="text" id="SampleAddName" class="form-control validate validate-any" autocomplete="off">
+
         <div class="checkbox">
             <label>
                 <input type="checkbox" name="optPrecursor" id="SampleAddPrecursor">
@@ -45,21 +13,53 @@
             </label>
         </div>
     </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
+
+    <div class="form-group col-sm-3">
         <label><b>Классификация:</b></label>
         <select id="SampleAddClass" class="form-control">
             @foreach (var Class in Model.Classes)
             {
                 <option value="@Class.Id">@Class.ShortName</option>
             }
-        </select>
+        </select>        
+    </div>
+
+    <div class="col-sm-5" style="display: flex">
+        <div class="form-group" style="flex: auto">
+            <label><b>Категория вещества:</b></label>
+            @foreach (var Cat in Model.Categories)
+            {
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="optCategories" class="validate validate-radio" value="@Cat.Id" />
+                        @Cat.Description
+                    </label>
+                </div>
+            }
+        </div>
+
+        <div class="form-group" style="flex: auto">
+            <label><b>Агрегатное состояние:</b></label>
+            @foreach (var Aggr in Model.AggrStates)
+            {
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="optAggrs" class="validate validate-radio" value="@Aggr.Id" />
+                        @Aggr.Description
+                    </label>
+                </div>
+            }
+        </div>
     </div>
 </div>
 <div class="modal-sample-row">
-    <div class="form-group">
-        <label><b>Единица измерения по умолчанию:</b></label>
+    <div class="form-group col-sm-3">
+        <label for="SampleAddQuantity"><b>Количество вещества:</b></label>
+        <input type="text" id="SampleAddQuantity" class="form-control validate validate-number" autocomplete="off">
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label><b>Единица измерения:</b></label>
         <select id="SampleAddDefUnit" class="form-control">
             @foreach (var DefUnit in Model.Units)
             {
@@ -67,70 +67,76 @@
             }
         </select>
     </div>
+
+    <div class="form-group col-sm-3">
+        <label for="SampleAddDateCreated"><b>Дата изготовления:</b></label>
+        <input type="text" id="SampleAddDateCreated" class="form-control datepicker validate validate-date" autocomplete="off">
+    </div>
 </div>
+
 <div class="modal-sample-row">
-    <div class="form-group">
+    <div class="form-group col-sm-7">
         <label for="SampleAddStdNum"><b>Номер стандарта:</b></label>
-        <input type="text" id="SampleAddStdNum" class="form-control" autocomplete="off">
+        <input type="text" id="SampleAddStdNum" class="form-control validate validate-any" autocomplete="off">
+    </div>
+
+    <div class="form-group col-sm-5">
+        <label for="SampleAddBatchNumber"><b>Номер партии:</b></label>
+        <input type="text" id="SampleAddBatchNumber" class="form-control validate validate-any" autocomplete="off">
     </div>
 </div>
+
 <div class="modal-sample-row">
-    <div class="form-group">
+    <div class="form-group col-sm-4">
+        <label for="SampleAddContract"><b>Номер договора:</b></label>
+        <input type="text" id="SampleAddContract" class="form-control validate validate-any" autocomplete="off">
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label for="SampleAddContractDate"><b>Дата договора:</b></label>
+        <input type="text" id="SampleAddContractDate" class="form-control datepicker validate validate-date" autocomplete="off">
+    </div>
+</div>
+
+<div class="modal-sample-row">
+    <div class="form-group col-sm-4">
+        <label for="SampleAddWaybill"><b>Номер товарной накладной:</b></label>
+        <input type="text" id="SampleAddWaybill" class="form-control validate validate-any" autocomplete="off">
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label for="SampleAddWaybillDate"><b>Дата товарной накладной:</b></label>
+        <input type="text" id="SampleAddWaybillDate" class="form-control datepicker validate validate-date" autocomplete="off">
+    </div>
+</div>
+
+<div class="modal-sample-row">
+    <div class="form-group col-sm-4">
+        <label for="SampleAddSupplier"><b>Поставщик:</b></label>
+        <input type="text" id="SampleAddSupplier" class="form-control validate validate-any" autocomplete="off">
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label for="SampleAddDateReceived"><b>Дата поступления:</b></label>
+        <input type="text" id="SampleAddDateReceived" class="form-control datepicker validate validate-date" autocomplete="off">
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label for="SampleAddDateExpiration"><b>Дата окончания срока годности:</b></label>
+        <input type="text" id="SampleAddDateExpiration" class="form-control datepicker validate validate-date" autocomplete="off">
+    </div>
+</div>
+
+<div class="modal-sample-row">
+    <div class="form-group col-sm-12">
         <label for="SampleAddStdInfo"><b>Реквизиты методики испытания:</b></label>
-        <input type="text" id="SampleAddStdInfo" class="form-control" autocomplete="off">
+        <input type="text" id="SampleAddStdInfo" class="form-control validate validate-any" autocomplete="off">
     </div>
 </div>
+
 <div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddQuantity"><b>Количество вещества:</b></label>
-        <input type="text" id="SampleAddQuantity" class="form-control" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
+    <div class="form-group col-sm-12">
         <label for="SampleAddComment"><b>Примечание:</b></label>
         <input type="text" id="SampleAddComment" class="form-control" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddSupplier"><b>Поставщик:</b></label>
-        <input type="text" id="SampleAddSupplier" class="form-control" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddWaybill"><b>Номер договора и товарной накладной:</b></label>
-        <input type="text" id="SampleAddWaybill" class="form-control" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddWaybillDate"><b>Дата договора и товарной накладной:</b></label>
-        <input type="text" id="SampleAddWaybillDate" class="form-control datepicker" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddBatchNumber"><b>Номер партии:</b></label>
-        <input type="text" id="SampleAddBatchNumber" class="form-control" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddDateReceived"><b>Дата поступления:</b></label>
-        <input type="text" id="SampleAddDateReceived" class="form-control datepicker" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddDateCreated"><b>Дата изготовления:</b></label>
-        <input type="text" id="SampleAddDateCreated" class="form-control datepicker" autocomplete="off">
-    </div>
-</div>
-<div class="modal-sample-row">
-    <div class="form-group">
-        <label for="SampleAddDateExpiration"><b>Дата окончания срока годности:</b></label>
-        <input type="text" id="SampleAddDateExpiration" class="form-control datepicker" autocomplete="off">
     </div>
 </div>

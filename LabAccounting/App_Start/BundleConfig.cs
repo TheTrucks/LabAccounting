@@ -24,11 +24,16 @@ namespace LabAccounting
 
             bundles.Add(new ScriptBundle("~/bundles/main_page")
                 .Include("~/Scripts/Models/TemplateModel.js")
+                .Include("~/Scripts/models/AutofillMenu.js")
+                .Include("~/Scripts/models/Validator.js")
                 );
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",
                       "~/Content/site.css"));
+
+            bundles.Add(new StyleBundle("~/Content/mainpage").Include(
+                      "~/Content/mainpage.css"));
 
             bundles.Add(new ScriptBundle("~/bundles/datepicker").Include(
                 "~/Scripts/litepicker.js"));
