@@ -5,9 +5,7 @@ using System.Web;
 using System.Web.Mvc;
 using LabAccEntity.Models.Data;
 using LabAccEntity.Models.Meta;
-using NHibernate.Linq;
 using LabAccounting.Service;
-using ConMan = LabAccEntity.NHibernateHelper;
 using System.Web.Script.Serialization;
 
 namespace LabAccounting.Controllers
@@ -23,31 +21,15 @@ namespace LabAccounting.Controllers
                 if (DateTime.TryParse(DateJump, out JumpDate))
                     Page = TimeHelper.CalcPage(JumpDate);
             }
-            ViewBag.Page = Page;
-            return View();
-        }
-
-        public PartialViewResult SampleList(int page, string order)
-        {
-            return PartialView("_SampleList", GetSamples(page, order));
+            return View(Page);
         }
 
         [HttpPost]
-        public JsonResult GetSampleListJson(int page, string order)
+        public JsonResult GetSampleListJson(int page, string dir, string order)
         {
-            var Serial = new JavaScriptSerializer();
-            Serial.RegisterConverters(new[] { new Models.SampleSerializer() });
-            var Model = Serial.Serialize(GetSamples(page, order));
-            return Json(Model);
-        }
-
-        [HttpPost]
-        public JsonResult GetSampleListJsonFull(int page, string order)
-        {
-            var Serial = new JavaScriptSerializer();
-            Serial.RegisterConverters(new[] { new Models.SampleSerializer() });
-            var Model = Serial.Serialize(GetSamples(page, order, true));
-            return Json(Model);
+            var SampleList = DynamicDataProxy.GetSamples(page, dir, order);
+            var Model = RenderRazorViewToString("_SampleList", SampleList.Item2);
+            return Json(new { Page = SampleList.Item1, Samples = Model });
         }
 
         [HttpPost]
@@ -60,8 +42,13 @@ namespace LabAccounting.Controllers
         public JsonResult GetTemplatesJson()
         {
             var Serial = new JavaScriptSerializer();
-            Serial.RegisterConverters(new[] { new Models.TemplateSerializer() });
-            var Model = Serial.Serialize(MetaDataProxy.Templates);
+            Serial.RegisterConverters(new JavaScriptConverter[] { new Models.TemplateSerializer(), new Models.ContractTemplateSerializer() });
+            var Model = Serial.Serialize(
+                new
+                {
+                    NameTemplates = MetaDataProxy.TemplateCache.CachedItems,
+                    ContractTemplates = MetaDataProxy.ContractTemplateCache.CachedItems
+                });
             return Json(Model);
         }
 
@@ -82,45 +69,34 @@ namespace LabAccounting.Controllers
         [HttpPost]
         public JsonResult SaveSample(Models.SampleAddModel Input)
         {
+            var ReturnCode = 500;
             try
             {
-                using (var session = ConMan.DbConn.SessionFactory.OpenSession())
-                {
-                    using (var trans = session.BeginTransaction())
-                    {
-                        session.Save(Input.GetSample(true));
-                        trans.Commit();
-                    }
-                }
+                DynamicDataProxy.SaveNewData(Input, true);
+                ReturnCode = 275;
+                MetaDataProxy.SaveNewMeta(Input.GetTemplate());
+                ReturnCode = 250;
+                MetaDataProxy.SaveNewMeta(Input.GetContractTemplate());
+                ReturnCode = 200;
             }
             catch (Exception Exc)
             {
-                return Json(new { code = 500, message = Exc.ToString() });
+                return Json(new { code = ReturnCode, message = Exc.ToString() });
             }
-            return Json(new { code = 200, message = "" });
+            return Json(new { code = ReturnCode, message = "" });
         }
 
-        private List<Sample> GetSamples(int Page = 1, string OrderString = "", bool Full = false)
+        private string RenderRazorViewToString(string viewName, object model)
         {
-            if (OrderString == null)
-                OrderString = "";
-            List<Sample> Model = new List<Sample>();
-            var Times = TimeHelper.GetPagedDates(Page);
-            if (Full)
-                Times = new Tuple<DateTime, DateTime>(Times.Item1, DateTime.UtcNow.Date);
-
-            using (var session = ConMan.DbConn.SessionFactory.OpenSession())
+            ViewData.Model = model;
+            using (var sw = new System.IO.StringWriter())
             {
-                Model = session.Query<Sample>()
-                    .Where(SystemTools.GetFilter(OrderString, Times.Item1, Times.Item2))
-                    .Fetch(x => x.Category)
-                    .Fetch(x => x.AggrState)
-                    .Fetch(x => x.Class)
-                    .Fetch(x => x.DefaultUnit)
-                    .OrderByDescending(SystemTools.GetOrder(OrderString))
-                    .ToList();
+                var viewResult = ViewEngines.Engines.FindPartialView(ControllerContext, viewName);
+                var viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw);
+                viewResult.View.Render(viewContext, sw);
+                viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
+                return sw.GetStringBuilder().ToString().Trim(new char[] { '\r', '\n', ' ' });
             }
-            return Model;
         }
     }
 }

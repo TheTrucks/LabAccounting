@@ -15,7 +15,6 @@ namespace LabAccounting.Service
         }
         public static Tuple<DateTime, DateTime> GetPagedDates(int Page)
         {
-            if (Page <= 0) Page = 1;
             TimeSpan Pager = new TimeSpan(Page * DaysPerPage, 0, 0, 0);
             DateTime LowEnd = DateTime.UtcNow.Date - Pager;
             DateTime HighEnd = LowEnd.AddDays(DaysPerPage);

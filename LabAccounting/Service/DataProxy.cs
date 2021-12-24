@@ -2,191 +2,149 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections.ObjectModel;
+using NHibernate.Linq;
 using LabAccEntity.Models.Meta;
 using LabAccEntity.Models.Data;
 
 namespace LabAccounting.Service
 {
+    internal abstract class CacheCollection<T> where T : MetaBase<T>
+    {
+        private Tuple<DateTime, List<T>> _cachedItems { get; set; }
+        public CacheCollection()
+        {
+            _cachedItems = new Tuple<DateTime, List<T>>(DateTime.MinValue, new List<T>());
+        }
+        public virtual ReadOnlyCollection<T> CachedItems 
+        {
+            get
+            {
+                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _cachedItems.Item1)
+                {
+                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
+                    {
+                        _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, session.Query<T>().ToList());
+                    }
+                }
+                return _cachedItems.Item2.AsReadOnly();
+            }
+        }
+
+        public virtual void SaveNewItem(T Input)
+        {
+            if (!CachedItems.Contains(Input, Input.ClassComparer()))
+            {
+                using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
+                {
+                    using (var trans = session.BeginTransaction())
+                    {
+                        session.Save(Input);
+                        trans.Commit();
+                    }
+                }
+                var Tmp = _cachedItems.Item2; Tmp.Add(Input);
+                _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, Tmp);
+            }
+        }
+    }
+
     public static class MetaDataProxy
     {
-        private static readonly Type[] SupportedMetaTypes = new Type[]
-        {
-            typeof(Template),
-            typeof(AggregateState),
-            typeof(ReagentCategory),
-            typeof(ReagentClass),
-            typeof(Unit)
-        };
+        internal class TemplateCacheCollection : CacheCollection<Template> {    }
+        internal class AggrStateCacheCollection : CacheCollection<AggregateState> {    }
+        internal class ReagCatCacheCollection : CacheCollection<ReagentCategory> {    }
+        internal class ReagClassCacheCollection : CacheCollection<ReagentClass> {    }
+        internal class UnitCacheCollection : CacheCollection<Unit> {    }
+        internal class ContractTemplateCacheCollection : CacheCollection<ContractTemplate> {    }
 
-        private static Tuple<DateTime, List<Template>> _templateCache = new Tuple<DateTime, List<Template>>(DateTime.MinValue, new List<Template>());
-        private static Tuple<DateTime, List<AggregateState>> _aggrStateCache = new Tuple<DateTime, List<AggregateState>>(DateTime.MinValue, new List<AggregateState>());
-        private static Tuple<DateTime, List<ReagentCategory>> _reagentCategoryCache = new Tuple<DateTime, List<ReagentCategory>>(DateTime.MinValue, new List<ReagentCategory>());
-        private static Tuple<DateTime, List<ReagentClass>> _reagentClassCache = new Tuple<DateTime, List<ReagentClass>>(DateTime.MinValue, new List<ReagentClass>());
-        private static Tuple<DateTime, List<Unit>> _unitCache = new Tuple<DateTime, List<Unit>>(DateTime.MinValue, new List<Unit>());
+        internal static TemplateCacheCollection TemplateCache = new TemplateCacheCollection();
+        internal static AggrStateCacheCollection AggrStateCache = new AggrStateCacheCollection();
+        internal static ReagCatCacheCollection ReagentCategoryCache = new ReagCatCacheCollection();
+        internal static ReagClassCacheCollection ReagentClassCache = new ReagClassCacheCollection();
+        internal static UnitCacheCollection UnitCache = new UnitCacheCollection();
+        internal static ContractTemplateCacheCollection ContractTemplateCache = new ContractTemplateCacheCollection();
 
-        public static ReadOnlyCollection<Template> Templates
+        public static void SaveNewMeta(Template Input) { TemplateCache.SaveNewItem(Input); }
+        public static void SaveNewMeta(AggregateState Input) { AggrStateCache.SaveNewItem(Input); }
+        public static void SaveNewMeta(ReagentCategory Input) { ReagentCategoryCache.SaveNewItem(Input); }
+        public static void SaveNewMeta(ReagentClass Input) { ReagentClassCache.SaveNewItem(Input); }
+        public static void SaveNewMeta(Unit Input) { UnitCache.SaveNewItem(Input); }
+        public static void SaveNewMeta(ContractTemplate Input) { ContractTemplateCache.SaveNewItem(Input); }
+    }
+
+    public static class DynamicDataProxy //caching as well maybe?..
+    {
+        public static void SaveNewData(Models.SampleAddModel Input, bool WithData)
         {
-            get
-            {
-                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _templateCache.Item1)
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        _templateCache = new Tuple<DateTime, List<Template>>(DateTime.UtcNow, session.Query<Template>().ToList());
-                    }
-                }
-                return _templateCache.Item2.AsReadOnly();
-            }
+            SaveNewData(Input.GetSample(WithData));
         }
-        public static ReadOnlyCollection<AggregateState> AggrStates
+        public static void SaveNewData(Sample Input)
         {
-            get
+            using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
             {
-                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _aggrStateCache.Item1)
+                using (var trans = session.BeginTransaction())
                 {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        _aggrStateCache = new Tuple<DateTime, List<AggregateState>>(DateTime.UtcNow, session.Query<AggregateState>().ToList());
-                    }
+                    session.Save(Input);
+                    trans.Commit();
                 }
-                return _aggrStateCache.Item2.AsReadOnly();
-            }
-        }
-        public static ReadOnlyCollection<ReagentCategory> ReagentCategories
-        {
-            get
-            {
-                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _reagentCategoryCache.Item1)
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        _reagentCategoryCache = new Tuple<DateTime, List<ReagentCategory>>(DateTime.UtcNow, session.Query<ReagentCategory>().ToList());
-                    }
-                }
-                return _reagentCategoryCache.Item2.AsReadOnly();
-            }
-        }
-        public static ReadOnlyCollection<ReagentClass> ReagentClasses
-        {
-            get
-            {
-                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _reagentClassCache.Item1)
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        _reagentClassCache = new Tuple<DateTime, List<ReagentClass>>(DateTime.UtcNow, session.Query<ReagentClass>().OrderBy(x => x.Order).ToList());
-                    }
-                }
-                return _reagentClassCache.Item2.AsReadOnly();
-            }
-        }
-        public static ReadOnlyCollection<Unit> Units
-        {
-            get
-            {
-                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _unitCache.Item1)
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        _unitCache = new Tuple<DateTime, List<Unit>>(DateTime.UtcNow, session.Query<Unit>().ToList());
-                    }
-                }
-                return _unitCache.Item2.AsReadOnly();
             }
         }
 
-        public static void SaveNewMeta(MetaBase Input)
+        public static Tuple<int, List<Sample>> GetSamples(int Page = 1, string Direction = "down", string OrderString = "", bool Full = false)
         {
-            var CurrentType = Input.GetType();
-            if (!SupportedMetaTypes.Contains(CurrentType))
-                throw new NotImplementedException($"Saving method for {CurrentType.Name} is not implemented");
+            if (OrderString == null)
+                OrderString = "";
+            List<Sample> SampleList = new List<Sample>();
 
-            SaveNewMetaData(Input);
+            using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
+            {
+                SampleList = RetrieveSamples(session, Page, OrderString, Full);
+
+                if (SampleList.Count == 0)
+                {
+                    Sample LastDate = null;
+                    if (Direction == "down")
+                    {
+                        var TimeLimit = TimeHelper.GetPagedDates(Page).Item1;
+
+                        LastDate = session.Query<Sample>()
+                            .Where(SystemTools.GetFilter(OrderString, DateTime.MinValue, TimeLimit))
+                            .OrderByDescending(SystemTools.GetOrder(OrderString))
+                            .FirstOrDefault(); 
+                    }
+                    else
+                    {
+                        var TimeLimit = TimeHelper.GetPagedDates(Page).Item2;
+
+                        LastDate = session.Query<Sample>()
+                            .Where(SystemTools.GetFilter(OrderString, TimeLimit, DateTime.UtcNow.AddDays(1)))
+                            .OrderBy(SystemTools.GetOrder(OrderString))
+                            .FirstOrDefault();
+                    }
+                    if (LastDate != null)
+                    {
+                        Page = TimeHelper.CalcPage(SystemTools.GetOrderDate(LastDate, OrderString));
+                        SampleList = RetrieveSamples(session, Page, OrderString, Full);
+                    }    
+                }
+            }
+            return new Tuple<int, List<Sample>>(Page, SampleList);
         }
 
-        private static void SaveNewMetaData(MetaBase Input)
+        private static List<Sample> RetrieveSamples(NHibernate.ISession session, int Page, string OrderString, bool Full)
         {
-            var CurrentType = Input.GetType();
-            if (CurrentType == typeof(Template))
-            {
-                if (!Templates.Contains(Input as Template, Input.ClassComparer()))
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        using (var trans = session.BeginTransaction())
-                        {
-                            session.Save(Input as Template);
-                            trans.Commit();
-                        }
-                    }
-                    var Tmp = _templateCache.Item2; Tmp.Add(Input as Template);
-                    _templateCache = new Tuple<DateTime, List<Template>>(DateTime.UtcNow, Tmp);
-                }
-            }
-            else if (CurrentType == typeof(ReagentCategory))
-            {
-                if (!ReagentCategories.Contains(Input as ReagentCategory, Input.ClassComparer()))
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        using (var trans = session.BeginTransaction())
-                        {
-                            session.Save(Input as ReagentCategory);
-                            trans.Commit();
-                        }
-                    }
-                    var Tmp = _reagentCategoryCache.Item2; Tmp.Add(Input as ReagentCategory);
-                    _reagentCategoryCache = new Tuple<DateTime, List<ReagentCategory>>(DateTime.UtcNow, Tmp);
-                }
-            }
-            else if (CurrentType == typeof(ReagentClass))
-            {
-                if (!ReagentClasses.Contains(Input as ReagentClass, Input.ClassComparer()))
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        using (var trans = session.BeginTransaction())
-                        {
-                            session.Save(Input as ReagentClass);
-                            trans.Commit();
-                        }
-                    }
-                    var Tmp = _reagentClassCache.Item2; Tmp.Add(Input as ReagentClass);
-                    _reagentClassCache = new Tuple<DateTime, List<ReagentClass>>(DateTime.UtcNow, Tmp);
-                }
-            }
-            else if (CurrentType == typeof(AggregateState))
-            {
-                if (!AggrStates.Contains(Input as AggregateState, Input.ClassComparer()))
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        using (var trans = session.BeginTransaction())
-                        {
-                            session.Save(Input as AggregateState);
-                            trans.Commit();
-                        }
-                    }
-                    var Tmp = _aggrStateCache.Item2; Tmp.Add(Input as AggregateState);
-                    _aggrStateCache = new Tuple<DateTime, List<AggregateState>>(DateTime.UtcNow, Tmp);
-                }
-            }
-            else if (CurrentType == typeof(Unit))
-            {
-                if (!Units.Contains(Input as Unit, Input.ClassComparer()))
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        using (var trans = session.BeginTransaction())
-                        {
-                            session.Save(Input as Unit);
-                            trans.Commit();
-                        }
-                    }
-                    var Tmp = _unitCache.Item2; Tmp.Add(Input as Unit);
-                    _unitCache = new Tuple<DateTime, List<Unit>>(DateTime.UtcNow, Tmp);
-                }
-            }
+            var Times = TimeHelper.GetPagedDates(Page);
+            if (Full)
+                Times = new Tuple<DateTime, DateTime>(Times.Item1, DateTime.UtcNow.Date);
+
+            return session.Query<Sample>()
+                    .Where(SystemTools.GetFilter(OrderString, Times.Item1, Times.Item2))
+                    .Fetch(x => x.Category)
+                    .Fetch(x => x.AggrState)
+                    .Fetch(x => x.Class)
+                    .Fetch(x => x.DefaultUnit)
+                    .OrderByDescending(SystemTools.GetOrder(OrderString))
+                    .ToList();
         }
     }
 }

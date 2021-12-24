@@ -1,10 +1,9 @@
-﻿function AutofillMenu(handler, datafilter) {
+﻿function AutofillMenu(handler, datafilter, multiinput) {
     this.autoelem = null;
     this.clkhandler = handler;
     this.datafilter = datafilter;
     this.templatelist = [];
-
-    var self = this;
+    this.multiinput = multiinput ? multiinput : [];
 
     AutofillMenu.prototype.RemoveMenu = function () {
         if (this.autoelem != null) {
@@ -14,10 +13,22 @@
     }
 
     AutofillMenu.prototype.Draw = function (event) {
+        if (this.templatelist.length == 0)
+            return;
+
         var element = event.target;
         this.RemoveMenu();
 
-        var Elements = this.FilterData($(element).val())
+        var Elements = null;
+        if (this.multiinput.length > 0) {
+            var multival = [];
+            multiinput.forEach(inp => multival.push($(inp).val()));
+            Elements = this.FilterData(multival);
+        }
+        else {
+            Elements = this.FilterData($(element).val());
+        }
+
         if (Elements == null || Elements.length == 0)
             return;
 
@@ -31,12 +42,12 @@
 
         this.autoelem = AutoMenu;
         $("body").append(AutoMenu);
-        $(AutoMenu).find("div.auto-elem").click(function (event) { self.ClickHandler(event); });
-    }
 
-    AutofillMenu.prototype.ClickHandler = function (event) {
-        this.clkhandler(event.currentTarget);
-        this.RemoveMenu();
+        var self = this;
+        $(AutoMenu).find("div.auto-elem").click(function (event) {
+            self.clkhandler(event.currentTarget);
+            self.RemoveMenu();
+        });
     }
 
     AutofillMenu.prototype.FilterData = function (input) {

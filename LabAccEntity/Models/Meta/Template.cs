@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LabAccEntity.Models.Meta
 {
-    public class Template : MetaBase
+    public class Template : MetaBase<Template>
     {
         public virtual int? Id { get; set; }
         public virtual string Name { get; set; }
@@ -16,27 +16,27 @@ namespace LabAccEntity.Models.Meta
         public virtual string StandartNumber { get; set; }
         public virtual string StandartInfo { get; set; }
 
-        public virtual IEqualityComparer<MetaBase> ClassComparer()
+        public virtual IEqualityComparer<Template> ClassComparer()
         {
             return new TemplateComparer();
         }
 
-        public class TemplateComparer : IEqualityComparer<MetaBase>
+        public class TemplateComparer : IEqualityComparer<Template>
         {
-            public bool Equals(MetaBase x, MetaBase y)
+            public bool Equals(Template x, Template y)
             {
                 return (
-                    (x as Template).Name == (y as Template).Name &&
-                    (x as Template).Precursor == (y as Template).Precursor &&
-                    (x as Template).Type.Id == (y as Template).Type.Id &&
-                    (x as Template).DefaultUnit.Id == (y as Template).DefaultUnit.Id &&
-                    (x as Template).StandartInfo == (y as Template).StandartInfo &&
-                    (x as Template).StandartNumber == (y as Template).StandartNumber);
+                    x.Name == y.Name &&
+                    x.Precursor == y.Precursor &&
+                    x.Type.Id == y.Type.Id &&
+                    x.DefaultUnit.Id == y.DefaultUnit.Id &&
+                    x.StandartInfo == y.StandartInfo &&
+                    x.StandartNumber == y.StandartNumber);
 
             }
-            public int GetHashCode(MetaBase obj)
+            public int GetHashCode(Template obj)
             {
-                return (((obj as Template).Name.GetHashCode() + (obj as Template).StandartInfo.GetHashCode() + (obj as Template).StandartNumber.GetHashCode()) / ((obj as Template).Type.Id.GetHashCode() + (obj as Template).DefaultUnit.Id.GetHashCode()) - (obj as Template).Precursor.GetHashCode());
+                return (obj.Name.GetHashCode() + obj.StandartInfo.GetHashCode() + obj.StandartNumber.GetHashCode()) / (obj.Type.Id.GetHashCode() + obj.DefaultUnit.Id.GetHashCode()) - obj.Precursor.GetHashCode();
             }
         }
     }

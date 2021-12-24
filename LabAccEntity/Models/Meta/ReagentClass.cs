@@ -6,32 +6,32 @@ using System.Threading.Tasks;
 
 namespace LabAccEntity.Models.Meta
 {
-    public class ReagentClass : MetaBase
+    public class ReagentClass : MetaBase<ReagentClass>
     {
         public virtual int? Id { get; set; }
         public virtual string ShortName { get; set; }
         public virtual string FullName { get; set; }
         public virtual int? Order { get; set; }
 
-        public virtual IEqualityComparer<MetaBase> ClassComparer()
+        public virtual IEqualityComparer<ReagentClass> ClassComparer()
         {
             return new ReagentClassComparer();
         }
 
-        public class ReagentClassComparer : IEqualityComparer<MetaBase>
+        public class ReagentClassComparer : IEqualityComparer<ReagentClass>
         {
-            public bool Equals(MetaBase x, MetaBase y)
+            public bool Equals(ReagentClass x, ReagentClass y)
             {
                 return (
-                    (x as ReagentClass).Id == (y as ReagentClass).Id &&
-                    (x as ReagentClass).ShortName == (y as ReagentClass).ShortName &&
-                    (x as ReagentClass).FullName == (y as ReagentClass).FullName &&
-                    (x as ReagentClass).Order == (y as ReagentClass).Order);
+                    x.Id == y.Id &&
+                    x.ShortName == y.ShortName &&
+                    x.FullName == y.FullName &&
+                    x.Order == y.Order);
 
             }
-            public int GetHashCode(MetaBase obj)
+            public int GetHashCode(ReagentClass obj)
             {
-                return (obj as ReagentClass).Id.GetHashCode() * ((obj as ReagentClass).ShortName.GetHashCode() + (obj as ReagentClass).FullName.GetHashCode()) / (obj as ReagentClass).Order.GetHashCode();
+                return obj.Id.GetHashCode() * (obj.ShortName.GetHashCode() + obj.FullName.GetHashCode()) / obj.Order.GetHashCode();
             }
         }
     }

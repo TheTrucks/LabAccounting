@@ -25,10 +25,12 @@ namespace LabAccEntity.Mappings.Data
             Map(x => x.BatchNumber, "batch_number");
             Map(x => x.Supplier);
             Map(x => x.Waybill);
+            Map(x => x.Contract);
             References(x => x.DefaultUnit, "default_unit_id");
             Map(x => x.DateCreated, "date_created");
             Map(x => x.DateReceived, "date_received");
             Map(x => x.DateWaybill, "date_waybill");
+            Map(x => x.DateContract, "date_contract");
             Map(x => x.DateDepleted, "date_depleted");
             Map(x => x.DateExpiration, "date_expiration");
             Map(x => x.DateExpired, "date_expired");

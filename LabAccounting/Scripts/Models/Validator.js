@@ -2,7 +2,7 @@
     this.attachedForm = form;
     FormValidator.prototype.methods = [
         { name: ".validate-any", regex: new RegExp(".+") },
-        { name: ".validate-date", regex: new RegExp("^(\\d{1}|[0-3]\\d)\\.(\\d{1}|[0-1][0-2])\\.\\d{4}$") },
+        { name: ".validate-date", regex: new RegExp("^(\\d{1}|[0-3]\\d)\\.([0]\\d{1}|[0-1][0-2])\\.\\d{4}$") },
         { name: ".validate-number", regex: new RegExp("^\\d+$") },
         { name: ".validate-radio", handler: RadioHandler }
     ];

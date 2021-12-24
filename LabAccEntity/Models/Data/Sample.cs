@@ -20,17 +20,19 @@ namespace LabAccEntity.Models.Data
         public virtual string BatchNumber { get; set; }
         public virtual string Supplier { get; set; }
         public virtual string Waybill { get; set; }
+        public virtual string Contract { get; set; }
         public virtual Unit DefaultUnit { get; set; }
         public virtual DateTime DateCreated { get; set; }
         public virtual DateTime DateReceived { get; set; }
 
         public virtual DateTime DateWaybill { get; set; }
+        public virtual DateTime DateContract { get; set; }
 
-        public virtual DateTime DateDepleted { get; set; }
+        public virtual DateTime? DateDepleted { get; set; }
 
         public virtual DateTime DateExpiration { get; set; }
 
-        public virtual DateTime DateExpired { get; set; }
+        public virtual DateTime? DateExpired { get; set; }
 
         public virtual IList<SampleData> DataList { get; set; }
     }

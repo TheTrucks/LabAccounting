@@ -15,31 +15,31 @@ namespace LabAccounting.Service
             switch (Input.ToUpperInvariant().Trim())
             {
                 case "DATEEXPIRED":
-                    Result = x => x.DateExpired > DateLow && x.DateExpired <= DateHigh;
+                    Result = x => x.DateExpired >= DateLow && x.DateExpired < DateHigh;
                     break;
                 case "DATEEXPIRATION":
-                    Result = x => x.DateExpiration > DateLow && x.DateExpiration <= DateHigh;
+                    Result = x => x.DateExpiration >= DateLow && x.DateExpiration < DateHigh;
                     break;
                 case "DATEDEPLETED":
-                    Result = x => x.DateDepleted > DateLow && x.DateDepleted <= DateHigh;
+                    Result = x => x.DateDepleted >= DateLow && x.DateDepleted < DateHigh;
                     break;
                 case "DATEWAYBILL":
-                    Result = x => x.DateWaybill > DateLow && x.DateWaybill <= DateHigh;
+                    Result = x => x.DateWaybill >= DateLow && x.DateWaybill < DateHigh;
                     break;
                 case "DATECREATED":
-                    Result = x => x.DateCreated > DateLow && x.DateCreated <= DateHigh;
+                    Result = x => x.DateCreated >= DateLow && x.DateCreated < DateHigh;
                     break;
                 case "DATERECEIVED":
                 default:
-                    Result = x => x.DateReceived > DateLow && x.DateReceived <= DateHigh;
+                    Result = x => x.DateReceived >= DateLow && x.DateReceived < DateHigh;
                     break;
             }
             return Result;
         }
 
-        public static Func<Sample, DateTime> GetOrder(string Input)
+        public static Func<Sample, DateTime?> GetOrder(string Input)
         {
-            Func<Sample, DateTime> Result;
+            Func<Sample, DateTime?> Result;
             switch (Input.ToUpperInvariant().Trim())
             {
                 case "DATEEXPIRED":
@@ -60,6 +60,34 @@ namespace LabAccounting.Service
                 case "DATERECEIVED":
                 default:
                     Result = x => x.DateReceived;
+                    break;
+            }
+            return Result;
+        }
+
+        public static DateTime GetOrderDate(Sample Input, string OrderString)
+        {
+            var Result = Input.DateReceived;
+            switch (OrderString.ToUpperInvariant().Trim())
+            {
+                case "DATEEXPIRED":
+                    Result = Input.DateExpired.Value;
+                    break;
+                case "DATEEXPIRATION":
+                    Result = Input.DateExpiration;
+                    break;
+                case "DATEDEPLETED":
+                    Result = Input.DateDepleted.Value;
+                    break;
+                case "DATEWAYBILL":
+                    Result = Input.DateWaybill;
+                    break;
+                case "DATECREATED":
+                    Result = Input.DateCreated;
+                    break;
+                case "DATERECEIVED":
+                default:
+                    Result = Input.DateReceived;
                     break;
             }
             return Result;

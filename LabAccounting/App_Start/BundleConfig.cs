@@ -26,6 +26,7 @@ namespace LabAccounting
                 .Include("~/Scripts/Models/TemplateModel.js")
                 .Include("~/Scripts/models/AutofillMenu.js")
                 .Include("~/Scripts/models/Validator.js")
+                .Include("~/Scripts/models/MainPage.js")
                 );
 
             bundles.Add(new StyleBundle("~/Content/css").Include(

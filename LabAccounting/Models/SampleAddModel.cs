@@ -18,10 +18,10 @@ namespace LabAccounting.Models
         {
             if (LoadData)
             {
-                Categories = Service.MetaDataProxy.ReagentCategories;
-                AggrStates = Service.MetaDataProxy.AggrStates;
-                Classes = Service.MetaDataProxy.ReagentClasses;
-                Units = Service.MetaDataProxy.Units;
+                Categories = Service.MetaDataProxy.ReagentCategoryCache.CachedItems;
+                AggrStates = Service.MetaDataProxy.AggrStateCache.CachedItems;
+                Classes = Service.MetaDataProxy.ReagentClassCache.CachedItems;
+                Units = Service.MetaDataProxy.UnitCache.CachedItems;
             }
         }
     }
@@ -40,7 +40,9 @@ namespace LabAccounting.Models
         public string Comment { get; set; }
         public string Supplier { get; set; }
         public string Waybill { get; set; }
+        public string Contract { get; set; }
         public string WaybillDate { get; set; }
+        public string ContractDate { get; set; }
         public string Batch { get; set; }
         public string ReceivedDate { get; set; }
         public string CreatedDate { get; set; }
@@ -69,6 +71,7 @@ namespace LabAccounting.Models
                 BatchNumber = this.Batch,
                 Supplier = this.Supplier,
                 Waybill = this.Waybill,
+                Contract = this.Contract,
                 DefaultUnit = new Unit
                 {
                     Id = this.DefUnit
@@ -76,7 +79,10 @@ namespace LabAccounting.Models
                 DateCreated = DateTime.Parse(this.CreatedDate),
                 DateReceived = DateTime.Parse(this.ReceivedDate),
                 DateWaybill = DateTime.Parse(this.WaybillDate),
-                DateExpiration = DateTime.Parse(this.ExpirationDate)
+                DateContract = DateTime.Parse(this.ContractDate),
+                DateExpiration = DateTime.Parse(this.ExpirationDate),
+                DateExpired = null,
+                DateDepleted = null
             };
 
             if (WithData)
@@ -97,6 +103,38 @@ namespace LabAccounting.Models
             }
 
             return Result;
+        }
+
+        public Template GetTemplate()
+        {
+            return new Template
+            {
+                Name = this.Name,
+                Precursor = this.Precursor,
+                Type = new ReagentClass
+                {
+                    Id = this.Class
+                },
+                DefaultUnit = new Unit
+                {
+                    Id = this.DefUnit
+                },
+                StandartNumber = this.StdNum,
+                StandartInfo = this.StdInfo
+            };
+        }
+
+        public ContractTemplate GetContractTemplate()
+        {
+            return new ContractTemplate
+            {
+                Contract = this.Contract,
+                DateContract = DateTime.Parse(this.ContractDate),
+                Waybill = this.Waybill,
+                DateWaybill = DateTime.Parse(this.WaybillDate),
+                Supplier = this.Supplier,
+                DateReceived = DateTime.Parse(this.ReceivedDate)
+            };
         }
     }
 }

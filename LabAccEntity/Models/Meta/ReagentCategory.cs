@@ -6,25 +6,25 @@ using System.Threading.Tasks;
 
 namespace LabAccEntity.Models.Meta
 {
-    public class ReagentCategory : MetaBase
+    public class ReagentCategory : MetaBase<ReagentCategory>
     {
         public virtual int? Id { get; set; }
         public virtual string Description { get; set; }
-        public virtual IEqualityComparer<MetaBase> ClassComparer()
+        public virtual IEqualityComparer<ReagentCategory> ClassComparer()
         {
             return new ReagentCategoryComparer();
         }
 
-        public class ReagentCategoryComparer : IEqualityComparer<MetaBase>
+        public class ReagentCategoryComparer : IEqualityComparer<ReagentCategory>
         {
-            public bool Equals(MetaBase x, MetaBase y)
+            public bool Equals(ReagentCategory x, ReagentCategory y)
             {
-                return ((x as ReagentCategory).Id == (y as ReagentCategory).Id);
+                return x.Id == y.Id;
 
             }
-            public int GetHashCode(MetaBase obj)
+            public int GetHashCode(ReagentCategory obj)
             {
-                return (obj as ReagentCategory).Id.GetHashCode() / (obj as ReagentCategory).Description.GetHashCode();
+                return obj.Id.GetHashCode() / obj.Description.GetHashCode();
             }
         }
     }

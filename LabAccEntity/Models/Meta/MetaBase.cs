@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace LabAccEntity.Models.Meta
 {
-    public interface MetaBase 
+    public interface MetaBase<T>
     {
-        IEqualityComparer<MetaBase> ClassComparer();
+        IEqualityComparer<T> ClassComparer();
     }
 }

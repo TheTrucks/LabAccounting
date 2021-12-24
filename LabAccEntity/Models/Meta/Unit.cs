@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LabAccEntity.Models.Meta
 {
-    public class Unit : MetaBase
+    public class Unit : MetaBase<Unit>
     {
         public virtual int? Id { get; set; }
         public virtual string ShortName { get; set; }
@@ -14,26 +14,26 @@ namespace LabAccEntity.Models.Meta
         public virtual Unit BaseUnit { get; set; }
         public virtual decimal BaseDiff { get; set; }
 
-        public virtual IEqualityComparer<MetaBase> ClassComparer()
+        public virtual IEqualityComparer<Unit> ClassComparer()
         {
             return new UnitComparer();
         }
 
-        public class UnitComparer : IEqualityComparer<MetaBase>
+        public class UnitComparer : IEqualityComparer<Unit>
         {
-            public bool Equals(MetaBase x, MetaBase y)
+            public bool Equals(Unit x, Unit y)
             {
                 return (
-                    (x as Unit).Id == (y as Unit).Id &&
-                    (x as Unit).ShortName == (y as Unit).ShortName &&
-                    (x as Unit).FullName == (y as Unit).FullName &&
-                    (x as Unit).BaseUnit.Id == (y as Unit).BaseUnit.Id &&
-                    (x as Unit).BaseDiff == (y as Unit).BaseDiff);
+                    x.Id == y.Id &&
+                    x.ShortName == y.ShortName &&
+                    x.FullName == y.FullName &&
+                    x.BaseUnit.Id == y.BaseUnit.Id &&
+                    x.BaseDiff == y.BaseDiff);
 
             }
-            public int GetHashCode(MetaBase obj)
+            public int GetHashCode(Unit obj)
             {
-                return (obj as Unit).Id.GetHashCode() * ((obj as Unit).FullName.GetHashCode() + (obj as Unit).ShortName.GetHashCode() + (obj as Unit).BaseDiff.GetHashCode()) / (obj as Unit).BaseUnit.Id.GetHashCode();
+                return obj.Id.GetHashCode() * (obj.FullName.GetHashCode() + obj.ShortName.GetHashCode() + obj.BaseDiff.GetHashCode()) / obj.BaseUnit.Id.GetHashCode();
             }
         }
     }
