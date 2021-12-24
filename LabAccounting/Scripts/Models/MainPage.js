@@ -48,7 +48,7 @@ $(document).ready(function () {
 
 function GetSampleAddPage(element) {
     SampleAddPageLoader = $.ajax({
-        url: "@Url.Action("MetaData", "Journal")",
+        url: MetaDataUrl,
         method: "POST"
     })
         .done(function (data) {
@@ -174,7 +174,7 @@ function ContractMenuClick(element) {
 
 function GetTemplates() {
     TemplateLoader = $.ajax({
-        url: "@Url.Action("GetTemplatesJson", "Journal")",
+        url: TemplatesUrl,
         type: "POST",
         dataType: "json"
     })
@@ -204,7 +204,7 @@ function GetNewPage(direction, initial, reload) {
         var Page = direction == "down" ? Paginator.down : Paginator.up;
 
         $.ajax({
-            url: "@Url.Action("GetSampleListJson", "Journal")",
+            url: SampleListUrl,
             data: JSON.stringify({ page: Page, dir: direction, order: "" }),
             type: "POST",
             dataType: "json",
@@ -258,7 +258,7 @@ function SaveNewSample() {
         var TmpSample = SampleAddModel.FromInputs($("#SampleAddBody")); //todo check if succesful
 
         $.ajax({
-            url: "@Url.Action("SaveSample", "Journal")",
+            url: SampleSaveUrl,
             data: JSON.stringify(TmpSample),
             type: "POST",
             dataType: "json",
