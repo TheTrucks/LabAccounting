@@ -1,4 +1,4 @@
-﻿@model Int32
+﻿@model Tuple<Int32, string>
 @{
     ViewBag.TitlePage = "Журнал учета реактивов";
 }
@@ -7,24 +7,24 @@
 @Scripts.Render("~/bundles/main_page")
 @Styles.Render("~/Content/mainpage")
 
-@Html.Hidden("Page", Model)
+@Html.Hidden("Page", Model.Item1)
 
 <div id="load" style="position: absolute; left: 0; top: 0; height: 100%; width: 100%; z-index: 9876; background-color: rgb(200,200,200); opacity: 0.45;">
     <div class="pageloader"></div>
 </div>
 
 <div class="row display-flex">
-    <div class="col-sm-2" style="align-self: flex-end;">
+    <div class="col-lg-2 col-sm-3" style="align-self: flex-end;">
         <a class="btn btn-primary" data-toggle="modal" data-target="#SampleAdd">
             <span class="glyphicon glyphicon-plus"></span>
             Добавить реагент
         </a>
     </div>
-    <div class="col-sm-6 col-sm-offset-1">
+    <div class="col-sm-6 col-lg-offset-1">
         <h2 class="center-block text-center">Журнал реагентов</h2>
     </div>
-    <div class="col-sm-3">
-
+    <div class="col-lg-2 col-lg-offset-1 col-sm-3" style="align-self: flex-end;">
+        <input type="text" value="@Model.Item2" id="DatePageSelector" class="form-control" autocomplete="off">
     </div>
 </div>
 <table class="table table-hover table-striped table-condensed" id="SampleTable">
@@ -42,7 +42,7 @@
         </tr>
     </thead>
     <tbody>
-        <tr id="DataLoadTop" class="lineload @(Model < 1 ? "hidden" : "")">
+        <tr id="DataLoadTop" class="lineload @(Model.Item1 <= 1 ? "hidden" : "")">
             <td colspan="9" class="text-center">Загрузить данные</td>
         </tr>
         <tr id="DataLoadBot" class="lineload">
@@ -57,8 +57,8 @@
             <div class="modal-body" id="SampleAddBody">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Отменить</button>
                 <button type="button" id="SampleAddSave" class="btn btn-primary">Сохранить</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Отменить</button>
             </div>
         </div>
     </div>

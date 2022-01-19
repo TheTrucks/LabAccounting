@@ -20,6 +20,7 @@ namespace LabAccEntity.Mappings.Meta
             Map(x => x.DateWaybill, "date_waybill");
             Map(x => x.Supplier);
             Map(x => x.DateReceived, "date_received");
+            Map(x => x.DateLastUsed, "date_used");
         }
     }
 }

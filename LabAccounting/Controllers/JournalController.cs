@@ -15,13 +15,17 @@ namespace LabAccounting.Controllers
         public ActionResult Index(string DateJump)
         {
             int Page = 1;
+            string Date = DateTime.UtcNow.ToString("dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
             if (!string.IsNullOrEmpty(DateJump))
             {
                 DateTime JumpDate;
                 if (DateTime.TryParse(DateJump, out JumpDate))
+                {
+                    Date = JumpDate.ToString("dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
                     Page = TimeHelper.CalcPage(JumpDate);
+                }
             }
-            return View(Page);
+            return View(new Tuple<int, string> (Page, Date));
         }
 
         [HttpPost]

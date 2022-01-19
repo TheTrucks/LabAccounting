@@ -25,7 +25,7 @@ namespace LabAccounting.Service
 
         public static int CalcPage(DateTime Date)
         {
-            return (int)Math.Ceiling((DateTime.UtcNow.Date - Date.Date).Days / (decimal)DaysPerPage);
+            return (int)Math.Ceiling(Math.Abs((DateTime.UtcNow.Date - Date.Date).Days) / (decimal)DaysPerPage);
         }
     }
 }

@@ -15,15 +15,29 @@ namespace LabAccounting.Service
         {
             _cachedItems = new Tuple<DateTime, List<T>>(DateTime.MinValue, new List<T>());
         }
+
+        public virtual List<T> GetItems(NHibernate.ISession session)
+        {
+            return session.Query<T>().ToList();
+        }
+        public virtual T GetItem(T Input)
+        {
+            return Input;
+        }
+        public virtual void UpdateItem(NHibernate.ISession session, T Item)
+        {
+            // do nothing
+        }
+
         public virtual ReadOnlyCollection<T> CachedItems 
         {
             get
             {
-                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _cachedItems.Item1)
+                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _cachedItems.Item1) //todo FromMinutes(30) -> editable from config
                 {
                     using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
                     {
-                        _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, session.Query<T>().ToList());
+                        _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, GetItems(session));
                     }
                 }
                 return _cachedItems.Item2.AsReadOnly();
@@ -32,30 +46,84 @@ namespace LabAccounting.Service
 
         public virtual void SaveNewItem(T Input)
         {
-            if (!CachedItems.Contains(Input, Input.ClassComparer()))
+            var Compare = Input.ClassComparer();
+            var Element = CachedItems.FirstOrDefault(x => Compare.Equals(x, Input));
+            using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
             {
-                using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
+                if (Element == null)
                 {
+
                     using (var trans = session.BeginTransaction())
                     {
-                        session.Save(Input);
+                        session.Save(GetItem(Input));
                         trans.Commit();
                     }
+
+                    var Tmp = _cachedItems.Item2; Tmp.Add(Input);
+                    _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, Tmp);
                 }
-                var Tmp = _cachedItems.Item2; Tmp.Add(Input);
-                _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, Tmp);
+                else
+                {
+                    UpdateItem(session, Element);
+                }
             }
         }
     }
 
     public static class MetaDataProxy
     {
-        internal class TemplateCacheCollection : CacheCollection<Template> {    }
+        internal class TemplateCacheCollection : CacheCollection<Template> 
+        {
+            public override List<Template> GetItems(NHibernate.ISession session)
+            {
+                return session.Query<Template>().Where(x => x.DateLastUsed > DateTime.UtcNow.Date.AddMonths(-3)).ToList();
+            }
+            public override Template GetItem(Template Input)
+            {
+                Input.DateLastUsed = DateTime.UtcNow.Date;
+                return Input;
+            }
+            public override void UpdateItem(NHibernate.ISession session, Template Item)
+            {
+                var UpdElem = session.Query<Template>().Where(x => x.Id == Item.Id).FirstOrDefault();
+                if (UpdElem != null)
+                {
+                    using (var trans = session.BeginTransaction())
+                    {
+                        UpdElem.DateLastUsed = DateTime.UtcNow.Date;
+                        trans.Commit();
+                    }
+                }
+            }
+        }
+        internal class ContractTemplateCacheCollection : CacheCollection<ContractTemplate> 
+        {
+            public override List<ContractTemplate> GetItems(NHibernate.ISession session)
+            {
+                return session.Query<ContractTemplate>().Where(x => x.DateLastUsed > DateTime.UtcNow.Date.AddMonths(-3)).ToList();
+            }
+            public override ContractTemplate GetItem(ContractTemplate Input)
+            {
+                Input.DateLastUsed = DateTime.UtcNow.Date;
+                return Input;
+            }
+            public override void UpdateItem(NHibernate.ISession session, ContractTemplate Item)
+            {
+                var UpdElem = session.Query<ContractTemplate>().Where(x => x.Id == Item.Id).FirstOrDefault();
+                if (UpdElem != null)
+                {
+                    using (var trans = session.BeginTransaction())
+                    {
+                        UpdElem.DateLastUsed = DateTime.UtcNow.Date;
+                        trans.Commit();
+                    }
+                }
+            }
+        }
         internal class AggrStateCacheCollection : CacheCollection<AggregateState> {    }
         internal class ReagCatCacheCollection : CacheCollection<ReagentCategory> {    }
         internal class ReagClassCacheCollection : CacheCollection<ReagentClass> {    }
         internal class UnitCacheCollection : CacheCollection<Unit> {    }
-        internal class ContractTemplateCacheCollection : CacheCollection<ContractTemplate> {    }
 
         internal static TemplateCacheCollection TemplateCache = new TemplateCacheCollection();
         internal static AggrStateCacheCollection AggrStateCache = new AggrStateCacheCollection();
@@ -121,11 +189,14 @@ namespace LabAccounting.Service
                             .OrderBy(SystemTools.GetOrder(OrderString))
                             .FirstOrDefault();
                     }
+
                     if (LastDate != null)
                     {
                         Page = TimeHelper.CalcPage(SystemTools.GetOrderDate(LastDate, OrderString));
                         SampleList = RetrieveSamples(session, Page, OrderString, Full);
-                    }    
+                    }
+                    else
+                        Page = 1;
                 }
             }
             return new Tuple<int, List<Sample>>(Page, SampleList);

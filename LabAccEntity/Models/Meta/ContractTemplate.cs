@@ -15,6 +15,8 @@ namespace LabAccEntity.Models.Meta
         public virtual DateTime DateWaybill { get; set; }
         public virtual string Supplier { get; set; }
         public virtual DateTime DateReceived { get; set; }
+        public virtual DateTime DateLastUsed { get; set; }
+
 
         public virtual IEqualityComparer<ContractTemplate> ClassComparer()
         {

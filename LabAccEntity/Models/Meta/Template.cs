@@ -15,6 +15,7 @@ namespace LabAccEntity.Models.Meta
         public virtual Unit DefaultUnit { get; set; }
         public virtual string StandartNumber { get; set; }
         public virtual string StandartInfo { get; set; }
+        public virtual DateTime DateLastUsed { get; set; }
 
         public virtual IEqualityComparer<Template> ClassComparer()
         {

@@ -26,6 +26,18 @@ $(document).ready(function () {
     Pagers.up.click(function () { GetNewPage("up", false); });
     Pagers.down.click(function () { GetNewPage("down", false); });
 
+    new Litepicker({
+        element: $("#DatePageSelector")[0],
+        lang: "ru-RU",
+        format: "DD.MM.YYYY",
+        autoRefresh: true,
+        setup: (picker) => {
+            picker.on("selected", () => {
+                window.location.href = new URL('?DateJump=' + $("#DatePageSelector").val(), window.location.origin);
+            });
+        }
+    });
+
     $("#SampleAdd").on("show.bs.modal", function (modal_elem) {
         var MBody = $("#SampleAddBody");
         $(MBody).html(
@@ -265,7 +277,7 @@ function SaveNewSample() {
             contentType: "application/json; charset=utf-8"
         })
             .done(function (data) {
-                if (data && data.code == 200) {
+                if (data && (data.code >= 200 || data.code < 300)) { //todo error notification on 275 | 250
                     ClearModal($("#SampleAdd"));
                     GetNewPage("down", false, true);
                 }

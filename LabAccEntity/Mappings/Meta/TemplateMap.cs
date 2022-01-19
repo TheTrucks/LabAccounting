@@ -20,6 +20,7 @@ namespace LabAccEntity.Mappings.Meta
             References(x => x.DefaultUnit, "default_unit_id");
             Map(x => x.StandartNumber, "std_num");
             Map(x => x.StandartInfo, "std_info");
+            Map(x => x.DateLastUsed, "date_used");
         }
     }
 }
