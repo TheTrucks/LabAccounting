@@ -60,7 +60,7 @@ $(document).ready(function () {
 
 function GetSampleAddPage(element) {
     SampleAddPageLoader = $.ajax({
-        url: MetaDataUrl,
+        url: ModalAddUrl,
         method: "POST"
     })
         .done(function (data) {
@@ -210,8 +210,7 @@ function GetNewPage(direction, initial, reload) {
         LineLoad(Scroller);
 
         if (reload == true) {
-            Paginator.down = 1;
-            Paginator.up = 1;
+            Paginator.up = Paginator.down;
         }
         var Page = direction == "down" ? Paginator.down : Paginator.up;
 
@@ -232,7 +231,7 @@ function GetNewPage(direction, initial, reload) {
                             Paginator.up = JsonData.Page;
                     }
                     if (JsonData.Samples)
-                        AddEntries(JsonData.Samples, Scroller, direction, reload);
+                        AddEntries(JsonData.Samples, direction, reload);
                 }
             })
             .fail(function (data) { console.log(data); }) // todo change temprorary output
@@ -244,11 +243,9 @@ function GetNewPage(direction, initial, reload) {
     }
 }
 //$(datad).html((window.innerHeight + window.pageYOffset) + "\\" + document.body.scrollHeight);
-function AddEntries(samples, element, direction, reload) {
+function AddEntries(samples, direction, reload) {
     if (samples.length > 0) {
         if (reload == true) {
-            $(Pagers.up).addClass("hidden");
-
             $("#SampleTable > tbody > tr.dataline").remove();
         }
         else if (direction == "down") {
@@ -256,9 +253,6 @@ function AddEntries(samples, element, direction, reload) {
         }
         else {
             Paginator.up -= 1;
-            if (Paginator.up < 1) {
-                $(element).addClass("hidden");
-            }
         }
 
         direction == "down" ? $("#SampleTable > tbody tr:last-child").before(samples) : $("#SampleTable > tbody tr:first-child").after(samples);
@@ -279,7 +273,10 @@ function SaveNewSample() {
             .done(function (data) {
                 if (data && (data.code >= 200 || data.code < 300)) { //todo error notification on 275 | 250
                     ClearModal($("#SampleAdd"));
+                    if (data.page && data.page > 0)
+                        Paginator.down = data.page;
                     GetNewPage("down", false, true);
+                    //todo set order by datecreated after adding
                 }
             })
             .fail(function (data) { console.log(data); }) //todo better logging

@@ -122,7 +122,13 @@ namespace LabAccounting.Service
         }
         internal class AggrStateCacheCollection : CacheCollection<AggregateState> {    }
         internal class ReagCatCacheCollection : CacheCollection<ReagentCategory> {    }
-        internal class ReagClassCacheCollection : CacheCollection<ReagentClass> {    }
+        internal class ReagClassCacheCollection : CacheCollection<ReagentClass> 
+        {
+            public override List<ReagentClass> GetItems(NHibernate.ISession session)
+            {
+                return session.Query<ReagentClass>().OrderBy(x => x.Order).ToList();
+            }
+        }
         internal class UnitCacheCollection : CacheCollection<Unit> {    }
 
         internal static TemplateCacheCollection TemplateCache = new TemplateCacheCollection();
@@ -142,10 +148,6 @@ namespace LabAccounting.Service
 
     public static class DynamicDataProxy //caching as well maybe?..
     {
-        public static void SaveNewData(Models.SampleAddModel Input, bool WithData)
-        {
-            SaveNewData(Input.GetSample(WithData));
-        }
         public static void SaveNewData(Sample Input)
         {
             using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())

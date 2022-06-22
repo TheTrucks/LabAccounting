@@ -37,7 +37,7 @@ namespace LabAccounting.Controllers
         }
 
         [HttpPost]
-        public PartialViewResult MetaData()
+        public PartialViewResult ModalAdd()
         {
             return PartialView("_AddModal", new Models.SampleAddMetaModel(true));
         }
@@ -74,10 +74,13 @@ namespace LabAccounting.Controllers
         public JsonResult SaveSample(Models.SampleAddModel Input)
         {
             var ReturnCode = 500;
+            var Page = -1;
             try
             {
-                DynamicDataProxy.SaveNewData(Input, true);
+                var SampleInput = Input.GetSample(true);
+                DynamicDataProxy.SaveNewData(SampleInput);
                 ReturnCode = 275;
+                Page = TimeHelper.CalcPage(SampleInput.DateReceived);
                 MetaDataProxy.SaveNewMeta(Input.GetTemplate());
                 ReturnCode = 250;
                 MetaDataProxy.SaveNewMeta(Input.GetContractTemplate());
@@ -87,7 +90,7 @@ namespace LabAccounting.Controllers
             {
                 return Json(new { code = ReturnCode, message = Exc.ToString() });
             }
-            return Json(new { code = ReturnCode, message = "" });
+            return Json(new { code = ReturnCode, page = Page, message = "" });
         }
 
         private string RenderRazorViewToString(string viewName, object model)

@@ -42,7 +42,7 @@
         </tr>
     </thead>
     <tbody>
-        <tr id="DataLoadTop" class="lineload @(Model.Item1 <= 1 ? "hidden" : "")">
+        <tr id="DataLoadTop" class="lineload">
             <td colspan="9" class="text-center">Загрузить данные</td>
         </tr>
         <tr id="DataLoadBot" class="lineload">
@@ -65,7 +65,7 @@
 </div>
 
 <script>
-    var MetaDataUrl = "@Url.Action("MetaData", "Journal")";
+    var ModalAddUrl = "@Url.Action("ModalAdd", "Journal")";
     var TemplatesUrl = "@Url.Action("GetTemplatesJson", "Journal")";
     var SampleListUrl = "@Url.Action("GetSampleListJson", "Journal")";
     var SampleSaveUrl = "@Url.Action("SaveSample", "Journal")";
