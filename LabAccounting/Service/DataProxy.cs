@@ -197,8 +197,6 @@ namespace LabAccounting.Service
                         Page = TimeHelper.CalcPage(SystemTools.GetOrderDate(LastDate, OrderString));
                         SampleList = RetrieveSamples(session, Page, OrderString, Full);
                     }
-                    else
-                        Page = 1;
                 }
             }
             return new Tuple<int, List<Sample>>(Page, SampleList);
@@ -208,7 +206,7 @@ namespace LabAccounting.Service
         {
             var Times = TimeHelper.GetPagedDates(Page);
             if (Full)
-                Times = new Tuple<DateTime, DateTime>(Times.Item1, DateTime.UtcNow.Date);
+                Times = new ValueTuple<DateTime, DateTime>(Times.Item1, DateTime.UtcNow.Date);
 
             return session.Query<Sample>()
                     .Where(SystemTools.GetFilter(OrderString, Times.Item1, Times.Item2))

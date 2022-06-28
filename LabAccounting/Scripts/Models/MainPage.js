@@ -142,6 +142,7 @@ function ClearModal(modal_elem, triggered) {
         $(modal_elem).modal("hide");
     }
     $(modal_elem).find("div.modal-body").children().remove();
+    $("#SampleAddWarning").addClass("hidden");
     PickersList.forEach(picker => picker.destroy());
     PickersList = [];
 
@@ -209,9 +210,6 @@ function GetNewPage(direction, initial, reload) {
         var Scroller = direction == "down" ? Pagers.down : Pagers.up;
         LineLoad(Scroller);
 
-        if (reload == true) {
-            Paginator.up = Paginator.down;
-        }
         var Page = direction == "down" ? Paginator.down : Paginator.up;
 
         $.ajax({
@@ -248,7 +246,8 @@ function AddEntries(samples, direction, reload) {
         if (reload == true) {
             $("#SampleTable > tbody > tr.dataline").remove();
         }
-        else if (direction == "down") {
+
+        if (direction == "down") {
             Paginator.down += 1;
         }
         else {
@@ -273,13 +272,18 @@ function SaveNewSample() {
             .done(function (data) {
                 if (data && (data.code >= 200 || data.code < 300)) { //todo error notification on 275 | 250
                     ClearModal($("#SampleAdd"));
-                    if (data.page && data.page > 0)
+                    if (data.page && data.page > 0) {
                         Paginator.down = data.page;
+                        Paginator.up = data.page - 1;
+                    }
                     GetNewPage("down", false, true);
                     //todo set order by datecreated after adding
                 }
             })
             .fail(function (data) { console.log(data); }) //todo better logging
+    }
+    else {
+        $("#SampleAddWarning").removeClass("hidden");
     }
 }
 

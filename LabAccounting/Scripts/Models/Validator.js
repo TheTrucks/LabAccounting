@@ -27,7 +27,7 @@
                 }
                 else if (method.handler) {
                     var tmpres = method.handler(inputs, method.selector);
-                    if (tmpres)
+                    if (tmpres != null)
                         result = tmpres;
                 }
             }
