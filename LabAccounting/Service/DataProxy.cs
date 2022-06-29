@@ -29,43 +29,37 @@ namespace LabAccounting.Service
             // do nothing
         }
 
-        public virtual ReadOnlyCollection<T> CachedItems 
+        public virtual ReadOnlyCollection<T> CachedItems(NHibernate.ISession session)
         {
-            get
+            if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _cachedItems.Item1) //todo FromMinutes(30) -> editable from config
             {
-                if ((DateTime.UtcNow - TimeSpan.FromMinutes(30)) > _cachedItems.Item1) //todo FromMinutes(30) -> editable from config
-                {
-                    using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
-                    {
-                        _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, GetItems(session));
-                    }
-                }
-                return _cachedItems.Item2.AsReadOnly();
+
+
+                _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, GetItems(session));
+
             }
+            return _cachedItems.Item2.AsReadOnly();
         }
 
-        public virtual void SaveNewItem(T Input)
+        public virtual void SaveNewItem(NHibernate.ISession session, T Input)
         {
             var Compare = Input.ClassComparer();
-            var Element = CachedItems.FirstOrDefault(x => Compare.Equals(x, Input));
-            using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
+            var Element = CachedItems(session).FirstOrDefault(x => Compare.Equals(x, Input));
+
+            if (Element == null)
             {
-                if (Element == null)
+                using (var trans = session.BeginTransaction())
                 {
-
-                    using (var trans = session.BeginTransaction())
-                    {
-                        session.Save(GetItem(Input));
-                        trans.Commit();
-                    }
-
-                    var Tmp = _cachedItems.Item2; Tmp.Add(Input);
-                    _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, Tmp);
+                    session.Save(GetItem(Input));
+                    trans.Commit();
                 }
-                else
-                {
-                    UpdateItem(session, Element);
-                }
+
+                var Tmp = _cachedItems.Item2; Tmp.Add(Input);
+                _cachedItems = new Tuple<DateTime, List<T>>(DateTime.UtcNow, Tmp);
+            }
+            else
+            {
+                UpdateItem(session, Element);
             }
         }
     }
@@ -138,68 +132,70 @@ namespace LabAccounting.Service
         internal static UnitCacheCollection UnitCache = new UnitCacheCollection();
         internal static ContractTemplateCacheCollection ContractTemplateCache = new ContractTemplateCacheCollection();
 
-        public static void SaveNewMeta(Template Input) { TemplateCache.SaveNewItem(Input); }
-        public static void SaveNewMeta(AggregateState Input) { AggrStateCache.SaveNewItem(Input); }
-        public static void SaveNewMeta(ReagentCategory Input) { ReagentCategoryCache.SaveNewItem(Input); }
-        public static void SaveNewMeta(ReagentClass Input) { ReagentClassCache.SaveNewItem(Input); }
-        public static void SaveNewMeta(Unit Input) { UnitCache.SaveNewItem(Input); }
-        public static void SaveNewMeta(ContractTemplate Input) { ContractTemplateCache.SaveNewItem(Input); }
+        public static void SaveNewMeta(NHibernate.ISession session, Template Input) { TemplateCache.SaveNewItem(session, Input); }
+        public static void SaveNewMeta(NHibernate.ISession session, AggregateState Input) { AggrStateCache.SaveNewItem(session, Input); }
+        public static void SaveNewMeta(NHibernate.ISession session, ReagentCategory Input) { ReagentCategoryCache.SaveNewItem(session, Input); }
+        public static void SaveNewMeta(NHibernate.ISession session, ReagentClass Input) { ReagentClassCache.SaveNewItem(session, Input); }
+        public static void SaveNewMeta(NHibernate.ISession session, Unit Input) { UnitCache.SaveNewItem(session, Input); }
+        public static void SaveNewMeta(NHibernate.ISession session, ContractTemplate Input) { ContractTemplateCache.SaveNewItem(session,Input); }
     }
 
     public static class DynamicDataProxy //caching as well maybe?..
     {
-        public static void SaveNewData(Sample Input)
+        public static void SaveNewData(NHibernate.ISession session, Sample Input)
         {
-            using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
+            using (var trans = session.BeginTransaction())
             {
-                using (var trans = session.BeginTransaction())
-                {
-                    session.Save(Input);
-                    trans.Commit();
-                }
+                session.Save(Input);
+                trans.Commit();
             }
         }
 
-        public static Tuple<int, List<Sample>> GetSamples(int Page = 1, string Direction = "down", string OrderString = "", bool Full = false)
+        public static void RemoveData(NHibernate.ISession session, long SampleID)
+        {
+            using (var trans = session.BeginTransaction())
+            {
+                session.Query<Sample>().Where(x => x.Id.Value == SampleID).Delete();
+                trans.Commit();
+            }
+        }
+
+        public static ValueTuple<int, List<Sample>> GetSamples(NHibernate.ISession session, int Page = 1, string Direction = "down", string OrderString = "", bool Full = false)
         {
             if (OrderString == null)
                 OrderString = "";
-            List<Sample> SampleList = new List<Sample>();
+            List<Sample> SampleList = RetrieveSamples(session, Page, OrderString, Full);
 
-            using (var session = LabAccEntity.NHibernateHelper.DbConn.SessionFactory.OpenSession())
+            if (SampleList.Count == 0)
             {
-                SampleList = RetrieveSamples(session, Page, OrderString, Full);
-
-                if (SampleList.Count == 0)
+                Sample LastDate = null;
+                if (Direction == "down")
                 {
-                    Sample LastDate = null;
-                    if (Direction == "down")
-                    {
-                        var TimeLimit = TimeHelper.GetPagedDates(Page).Item1;
+                    var TimeLimit = TimeHelper.GetPagedDates(Page).Item1;
 
-                        LastDate = session.Query<Sample>()
-                            .Where(SystemTools.GetFilter(OrderString, DateTime.MinValue, TimeLimit))
-                            .OrderByDescending(SystemTools.GetOrder(OrderString))
-                            .FirstOrDefault(); 
-                    }
-                    else
-                    {
-                        var TimeLimit = TimeHelper.GetPagedDates(Page).Item2;
+                    LastDate = session.Query<Sample>()
+                        .Where(SystemTools.GetFilter(OrderString, DateTime.MinValue, TimeLimit))
+                        .OrderByDescending(SystemTools.GetOrder(OrderString))
+                        .FirstOrDefault();
+                }
+                else
+                {
+                    var TimeLimit = TimeHelper.GetPagedDates(Page).Item2;
 
-                        LastDate = session.Query<Sample>()
-                            .Where(SystemTools.GetFilter(OrderString, TimeLimit, DateTime.UtcNow.AddDays(1)))
-                            .OrderBy(SystemTools.GetOrder(OrderString))
-                            .FirstOrDefault();
-                    }
+                    LastDate = session.Query<Sample>()
+                        .Where(SystemTools.GetFilter(OrderString, TimeLimit, DateTime.UtcNow.AddDays(1)))
+                        .OrderBy(SystemTools.GetOrder(OrderString))
+                        .FirstOrDefault();
+                }
 
-                    if (LastDate != null)
-                    {
-                        Page = TimeHelper.CalcPage(SystemTools.GetOrderDate(LastDate, OrderString));
-                        SampleList = RetrieveSamples(session, Page, OrderString, Full);
-                    }
+                if (LastDate != null)
+                {
+                    Page = TimeHelper.CalcPage(SystemTools.GetOrderDate(LastDate, OrderString));
+                    SampleList = RetrieveSamples(session, Page, OrderString, Full);
                 }
             }
-            return new Tuple<int, List<Sample>>(Page, SampleList);
+
+            return new ValueTuple<int, List<Sample>>(Page, SampleList);
         }
 
         private static List<Sample> RetrieveSamples(NHibernate.ISession session, int Page, string OrderString, bool Full)

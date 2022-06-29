@@ -56,6 +56,32 @@ div.autocompletion {
         border: none;
     }
 
+div.popup-menu {
+    position: absolute;
+    min-width: 150px;
+    max-width: 300px;
+    background-color: white;
+    border: 1px solid black;
+    border-bottom: none;
+}
+
+div.popup-menu-el {
+    height: 25px;
+    width: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-bottom: 0.5px solid black;
+}
+
+    div.popup-menu-el span {
+        line-height: 25px;
+    }
+
+    div.popup-menu-el:hover {
+        background-color: Highlight;
+        cursor: pointer;
+    }
+
 .lds-ellipsis {
     display: inline-block;
     position: relative;

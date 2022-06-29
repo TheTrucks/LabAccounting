@@ -14,14 +14,16 @@ namespace LabAccounting.Models
         public ReadOnlyCollection<ReagentClass> Classes;
         public ReadOnlyCollection<Unit> Units;
 
-        public SampleAddMetaModel(bool LoadData)
+        public SampleAddMetaModel(bool LoadData, NHibernate.ISession session)
         {
             if (LoadData)
             {
-                Categories = Service.MetaDataProxy.ReagentCategoryCache.CachedItems;
-                AggrStates = Service.MetaDataProxy.AggrStateCache.CachedItems;
-                Classes = Service.MetaDataProxy.ReagentClassCache.CachedItems;
-                Units = Service.MetaDataProxy.UnitCache.CachedItems;
+                if (session == null)
+                    throw new NHibernate.SessionException("No persistent session found for the data loading");
+                Categories = Service.MetaDataProxy.ReagentCategoryCache.CachedItems(session);
+                AggrStates = Service.MetaDataProxy.AggrStateCache.CachedItems(session);
+                Classes = Service.MetaDataProxy.ReagentClassCache.CachedItems(session);
+                Units = Service.MetaDataProxy.UnitCache.CachedItems(session);
             }
         }
     }

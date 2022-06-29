@@ -31,15 +31,21 @@ namespace LabAccounting.Controllers
         [HttpPost]
         public JsonResult GetSampleListJson(int page, string dir, string order)
         {
-            var SampleList = DynamicDataProxy.GetSamples(page, dir, order);
-            var Model = RenderRazorViewToString("_SampleList", SampleList.Item2);
-            return Json(new { Page = SampleList.Item1, Samples = Model });
+            using (var session = SessionManager.GetSession)
+            {
+                var SampleList = DynamicDataProxy.GetSamples(session, page, dir, order);
+                var Model = RenderRazorViewToString("_SampleList", SampleList.Item2);
+                return Json(new { Page = SampleList.Item1, Samples = Model });
+            }
         }
 
         [HttpPost]
         public PartialViewResult ModalAdd()
         {
-            return PartialView("_AddModal", new Models.SampleAddMetaModel(true));
+            using (var session = SessionManager.GetSession)
+            { 
+                return PartialView("_AddModal", new Models.SampleAddMetaModel(true, session)); 
+            }
         }
 
         [HttpPost]
@@ -47,50 +53,76 @@ namespace LabAccounting.Controllers
         {
             var Serial = new JavaScriptSerializer();
             Serial.RegisterConverters(new JavaScriptConverter[] { new Models.TemplateSerializer(), new Models.ContractTemplateSerializer() });
-            var Model = Serial.Serialize(
-                new
-                {
-                    NameTemplates = MetaDataProxy.TemplateCache.CachedItems,
-                    ContractTemplates = MetaDataProxy.ContractTemplateCache.CachedItems
-                });
-            return Json(Model);
+            using (var session = SessionManager.GetSession)
+            {
+                var Model = Serial.Serialize(
+                    new
+                    {
+                        NameTemplates = MetaDataProxy.TemplateCache.CachedItems(session),
+                        ContractTemplates = MetaDataProxy.ContractTemplateCache.CachedItems(session)
+                    });
+                return Json(Model);
+            }
         }
 
         [HttpPost]
         public JsonResult SaveTemplate(Models.InputTemplate SaveObj)
         {
-            try
+            using (var session = SessionManager.GetSession)
             {
-                MetaDataProxy.SaveNewMeta(SaveObj.FormTemplate());
+                try
+                {
+                    MetaDataProxy.SaveNewMeta(session, SaveObj.FormTemplate());
+                }
+                catch (Exception Exc)
+                {
+                    return Json(new { code = 500, message = Exc.ToString() });
+                }
+                return Json(new { code = 200, message = "" });
             }
-            catch (Exception Exc)
-            {
-                return Json(new { code = 500, message = Exc.ToString() });
-            }
-            return Json(new { code = 200, message = "" });
         }
 
         [HttpPost]
         public JsonResult SaveSample(Models.SampleAddModel Input)
         {
-            var ReturnCode = 500;
-            var Page = -1;
-            try
+            using (var session = SessionManager.GetSession)
             {
-                var SampleInput = Input.GetSample(true);
-                DynamicDataProxy.SaveNewData(SampleInput);
-                ReturnCode = 275;
-                Page = TimeHelper.CalcPage(SampleInput.DateReceived);
-                MetaDataProxy.SaveNewMeta(Input.GetTemplate());
-                ReturnCode = 250;
-                MetaDataProxy.SaveNewMeta(Input.GetContractTemplate());
-                ReturnCode = 200;
+                var ReturnCode = 500;
+                var Page = -1;
+                try
+                {
+                    var SampleInput = Input.GetSample(true);
+                    DynamicDataProxy.SaveNewData(session, SampleInput);
+                    ReturnCode = 275;
+                    Page = TimeHelper.CalcPage(SampleInput.DateReceived);
+                    MetaDataProxy.SaveNewMeta(session, Input.GetTemplate());
+                    ReturnCode = 250;
+                    MetaDataProxy.SaveNewMeta(session, Input.GetContractTemplate());
+                    ReturnCode = 200;
+                }
+                catch (Exception Exc)
+                {
+                    return Json(new { code = ReturnCode, message = Exc.ToString() });
+                }
+                return Json(new { code = ReturnCode, page = Page, message = "" });
             }
-            catch (Exception Exc)
+        }
+
+        [HttpPost]
+        public JsonResult RemoveSample(long SampleId)
+        {
+            using (var session = SessionManager.GetSession)
             {
-                return Json(new { code = ReturnCode, message = Exc.ToString() });
+                try
+                {
+                    DynamicDataProxy.RemoveData(session, SampleId);
+                    return Json(new { code = 200 });
+                }
+                catch (Exception Exc)
+                {
+                    return Json(new { code = 500, message = Exc.ToString() });
+                }
             }
-            return Json(new { code = ReturnCode, page = Page, message = "" });
         }
 
         private string RenderRazorViewToString(string viewName, object model)

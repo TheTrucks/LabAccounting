@@ -17,7 +17,6 @@ namespace LabAccounting
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
-            LabAccEntity.NHibernateHelper.OnStart();
             AuthorizationModule.Initializer.Init(
                 int.Parse(WebConfigurationManager.AppSettings["AuthSiteID"]),
                 WebConfigurationManager.AppSettings["AuthDatabaseConnectionString"]);

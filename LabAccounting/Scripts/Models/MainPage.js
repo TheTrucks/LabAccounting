@@ -9,6 +9,7 @@ var ClassList = {};
 var UnitList = {};
 var PickersList = [];
 var Validator = null;
+var PopupMenu = null;
 var Paginator = {
     up: 1,
     down: 1
@@ -33,10 +34,13 @@ $(document).ready(function () {
         autoRefresh: true,
         setup: (picker) => {
             picker.on("selected", () => {
-                window.location.href = new URL('?DateJump=' + $("#DatePageSelector").val(), window.location.origin);
+                window.location.href = IndexUrl + "?DateJump=" + $("#DatePageSelector").val();
             });
         }
     });
+
+    $("body").on("click", function (event) { RemovePopupMenu(); });
+    $("#SampleTable").on("contextmenu", function (event) { DrawPopupMenu(event); });
 
     $("#SampleAdd").on("show.bs.modal", function (modal_elem) {
         var MBody = $("#SampleAddBody");
@@ -285,6 +289,53 @@ function SaveNewSample() {
     else {
         $("#SampleAddWarning").removeClass("hidden");
     }
+}
+
+function RemoveSample(inputdata, element) {
+    var elemcache = $(element).clone();
+    LineLoad(element);
+    $.ajax({
+        url: SampleRemoveUrl,
+        data: JSON.stringify({ "SampleId": inputdata }),
+        type: "POST",
+        dataType: "json",
+        contentType: "application/json; charset=utf-8"
+    })
+    .done(function (data) {
+        if (data && (data.code == 200)) {
+            $(element).remove();
+        }
+        else {
+            console.log(data.message);
+            $(element).replaceWith(elemcache);
+        }
+    })
+    .fail(function (data) {
+        console.log(data); 
+        $(element).replaceWith(elemcache);
+    }) 
+    .always(function() { elemcache = null; });
+    //todo better logging
+}
+
+function DrawPopupMenu(data) {
+    RemovePopupMenu();
+    if ($(data.target).parent())
+    data.preventDefault();
+    PopupMenu = $('<div class="popup-menu"></div>');
+    var elementRemove = $('<div class="popup-menu-el" id="removesample"><span>Удалить</span><span class="glyphicon glyphicon-trash pull-right"></span></div>');
+    $(PopupMenu).append(elementRemove);
+    $(PopupMenu).offset({ top: data.pageY, left: data.pageX });
+    $('body').append(PopupMenu);
+    $('#removesample').on('click', function () {
+        RemoveSample($(data.target).parent().attr("data-id"), $(data.target).parent()); //todo add confirm prompt
+    });
+}
+
+function RemovePopupMenu() {
+    if (PopupMenu !== null)
+        PopupMenu.remove();
+    PopupMenu = null;
 }
 
 function LineLoad(element) {
